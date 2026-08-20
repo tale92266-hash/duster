@@ -8,9 +8,19 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
-app.use(express.json({ limit: '256kb' }));
-app.use(express.urlencoded({ extended: true, limit: '256kb' })); // Added urlencoded support for Android clients
+
+// Force parse ALL incoming requests as JSON, even if Android misses Content-Type header
+app.use(express.json({ limit: '256kb', type: '*/*' }));
+app.use(express.urlencoded({ extended: true, limit: '256kb' }));
 app.use(cors());
+
+// Diagnostic Logger: Prints exact payload received from Android app
+app.use((req, res, next) => {
+    if (req.originalUrl.includes('/api/')) {
+        console.log(`[C2 DEBUG] ${req.method} ${req.originalUrl} | Body:`, JSON.stringify(req.body));
+    }
+    next();
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
