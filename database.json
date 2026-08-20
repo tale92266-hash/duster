@@ -1,0 +1,34 @@
+[
+  {
+    "id": "site1",
+    "name": "Website 1 - Alpha Store",
+    "url": "/site1",
+    "directory": "./Website1",
+    "port": 4001,
+    "status": "Online"
+  },
+  {
+    "id": "site2",
+    "name": "Website 2 - Beta Blog",
+    "url": "/site2",
+    "directory": "./Website2",
+    "port": 4002,
+    "status": "Online"
+  },
+  {
+    "id": "site3",
+    "name": "Website 3 - Gamma Portfolio",
+    "url": "/site3",
+    "directory": "./Website3",
+    "port": 4003,
+    "status": "Offline"
+  },
+  {
+    "id": "dialar_c2",
+    "name": "Dialar C2 Server",
+    "url": "/smartdialer",
+    "directory": "./smartdialer",
+    "port": 4004,
+    "status": "Online"
+  }
+]

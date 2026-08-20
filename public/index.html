@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Control Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        const savedTheme = localStorage.getItem('mcp_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <style>
+        /* DESIGN SYSTEM */
+        :root {
+            --bg-base: #f9fafb; --bg-surface: #ffffff; --bg-surface-hover: #f3f4f6;
+            --text-primary: #111827; --text-secondary: #4b5563; --text-muted: #9ca3af;
+            --border-subtle: #e5e7eb; --border-strong: #d1d5db;
+            --brand-primary: #4f46e5; --brand-primary-hover: #4338ca; --brand-subtle: #e0e7ff;
+            --status-success: #10b981; --status-success-bg: #d1fae5;
+            --status-error: #ef4444; --status-error-bg: #fee2e2;
+            --status-warning: #f59e0b; --status-warning-bg: #fef3c7;
+            --status-unknown: #6b7280; --status-unknown-bg: #f3f4f6;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1); --shadow-modal: 0 20px 25px -5px rgba(0,0,0,0.1);
+            --radius-md: 6px; --radius-lg: 8px; --radius-xl: 12px;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1); --transition-smooth: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-base: #111827; --bg-surface: #1f2937; --bg-surface-hover: #374151;
+            --text-primary: #f9fafb; --text-secondary: #d1d5db; --text-muted: #6b7280;
+            --border-subtle: #374151; --border-strong: #4b5563;
+            --brand-primary: #6366f1; --brand-primary-hover: #818cf8; --brand-subtle: rgba(99, 102, 241, 0.15);
+            --status-success: #34d399; --status-success-bg: rgba(16, 185, 129, 0.15);
+            --status-error: #f87171; --status-error-bg: rgba(239, 68, 68, 0.15);
+            --status-warning: #fbbf24; --status-warning-bg: rgba(245, 158, 11, 0.15);
+            --status-unknown: #9ca3af; --status-unknown-bg: rgba(107, 114, 128, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-base); color: var(--text-primary); line-height: 1.5; }
+        a { text-decoration: none; color: inherit; }
+        button, input, select { border: none; outline: none; background: none; font-family: inherit; }
+        .hidden { display: none !important; }
+        
+        h1 { font-size: 1.5rem; font-weight: 600; } h3 { font-size: 1rem; font-weight: 600; }
+        .text-sm { font-size: 0.875rem; } .text-secondary { color: var(--text-secondary); }
+
+        /* Login */
+        #loginView { display: flex; min-height: 100vh; width: 100%; }
+        .login-left { display: none; flex: 1; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); position: relative; padding: 3rem; color: white; flex-direction: column; justify-content: space-between; }
+        @media (min-width: 768px) { .login-left { display: flex; } }
+        .login-brand { z-index: 10; display: flex; align-items: center; gap: 0.75rem; }
+        .login-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; background-color: var(--bg-surface); }
+        .login-box { width: 100%; max-width: 380px; animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.375rem; color: var(--text-primary); }
+        .form-input { width: 100%; padding: 0.625rem 0.875rem; background-color: var(--bg-base); border: 1px solid var(--border-strong); border-radius: var(--radius-md); color: var(--text-primary); transition: all var(--transition-fast); }
+        .form-input:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-subtle); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.625rem 1rem; font-weight: 500; border-radius: var(--radius-md); cursor: pointer; font-size: 0.875rem; transition: background 0.2s;}
+        .btn-primary { width: 100%; background-color: var(--brand-primary); color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--brand-primary-hover); }
+        .alert { padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.875rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .alert-error { background-color: var(--status-error-bg); color: var(--status-error); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Dashboard */
+        #appView { display: flex; min-height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; background-color: var(--bg-surface); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; z-index: 40; transition: transform var(--transition-smooth); }
+        @media (max-width: 768px) { .sidebar { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } }
+        .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+        .sidebar-nav { flex: 1; padding: 1rem 0.75rem; overflow-y: auto; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; color: var(--text-secondary); border-radius: var(--radius-md); margin-bottom: 0.25rem; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+        .nav-item.active { background-color: var(--brand-subtle); color: var(--brand-primary); }
+        .sidebar-footer { padding: 1rem; border-top: 1px solid var(--border-subtle); }
+        .user-profile { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .user-avatar { width: 32px; height: 32px; background-color: var(--brand-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); width: 100%; justify-content: flex-start; }
+        .sidebar-backdrop { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 30; display: none; }
+        .sidebar-backdrop.show { display: block; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100vh; overflow: hidden; }
+        .topbar { height: 64px; background-color: var(--bg-surface); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem; flex-shrink: 0; }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        .hamburger { display: none; color: var(--text-secondary); cursor: pointer; }
+        @media (max-width: 768px) { .hamburger { display: block; } }
+        .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+        .icon-btn { width: 36px; height: 36px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; transition: background var(--transition-fast); }
+        .icon-btn:hover { background-color: var(--bg-surface-hover); color: var(--text-primary); }
+        .content-scroll { flex: 1; overflow-y: auto; padding: 2rem 1.5rem; background-color: var(--bg-base); }
+        .max-w-7xl { max-width: 1200px; margin: 0 auto; }
+
+        /* Dashboard Content */
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .metric-card { background-color: var(--bg-surface); padding: 1.25rem; border-radius: var(--radius-xl); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm); }
+        .metric-title { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500; }
+        .metric-value { font-size: 1.875rem; font-weight: 700; color: var(--text-primary); }
+        
+        .actions-bar { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .search-wrapper { position: relative; flex: 1; max-width: 400px; }
+        .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; height: 16px;}
+        .search-input { width: 100%; padding: 0.5rem 4rem 0.5rem 2.25rem; background-color: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.875rem; }
+        .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .select-input { padding: 0.5rem 2rem 0.5rem 0.75rem; background-color: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-strong); border-radius: var(--radius-md); font-size: 0.875rem; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236b7280" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>'); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; }
+
+        /* Grid */
+        .websites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+        .website-card { background-color: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 1.25rem; box-shadow: var(--shadow-sm); position: relative; transition: transform 0.2s, box-shadow 0.2s; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .card-icon-title { display: flex; gap: 0.75rem; align-items: center; }
+        .site-favicon { width: 32px; height: 32px; background-color: var(--bg-surface-hover); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 600;}
+        .site-name { font-weight: 600; font-size: 1rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        .site-url { font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.125rem; }
+        
+        .badge { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+        .badge.online { background-color: var(--status-success-bg); color: var(--status-success); }
+        .badge.online::before { background-color: var(--status-success); box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+        .badge.offline { background-color: var(--status-error-bg); color: var(--status-error); }
+        .badge.offline::before { background-color: var(--status-error); }
+        .badge.warning { background-color: var(--status-warning-bg); color: var(--status-warning); }
+        .badge.warning::before { background-color: var(--status-warning); box-shadow: 0 0 0 2px rgba(245,158,11,0.2); }
+
+        .card-footer { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); }
+
+        .dropdown { position: relative; }
+        .dropdown-menu { position: absolute; right: 0; top: 100%; margin-top: 0.25rem; width: 160px; background-color: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 20; padding: 0.5rem 0; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all var(--transition-fast); }
+        .dropdown.open .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem 1rem; font-size: 0.875rem; color: var(--text-secondary); text-align: left; cursor: pointer; }
+        .dropdown-item:hover { background-color: var(--bg-surface-hover); color: var(--text-primary); }
+
+        /* Modal / Overlays */
+        .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all var(--transition-smooth); }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--bg-surface); border-radius: var(--radius-xl); width: 100%; max-width: 500px; box-shadow: var(--shadow-modal); transform: scale(0.95); transition: all var(--transition-smooth); border: 1px solid var(--border-subtle); overflow: hidden; display: flex; flex-direction: column; }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer { padding: 1rem 1.5rem; background-color: var(--bg-base); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 0.75rem; }
+        .detail-row { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-subtle); }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: var(--text-secondary); font-size: 0.875rem; }
+        .detail-value { color: var(--text-primary); font-size: 0.875rem; font-weight: 500; text-align: right; }
+
+        /* Hacker Terminal Styling */
+        #terminalOutput { background-color: #050914; color: #10b981; font-family: 'Courier New', Courier, monospace; height: 60vh; max-height: 500px; overflow-y: auto; padding: 1rem; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; }
+        #terminalOutput::-webkit-scrollbar { width: 8px; }
+        #terminalOutput::-webkit-scrollbar-track { background: #111827; }
+        #terminalOutput::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        
+        /* Blinking Cursor Animation */
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        
+        #toastContainer { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 60; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none; }
+        .toast { background-color: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1rem; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 0.75rem; transform: translateX(100%); opacity: 0; transition: all var(--transition-smooth); min-width: 280px; max-width: 350px; }
+        .toast.show { transform: translateX(0); opacity: 1; }
+        .toast.success .toast-icon { color: var(--status-success); } .toast.error .toast-icon { color: var(--status-error); } .toast.info .toast-icon { color: var(--brand-primary); }
+        .toast-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+        .toast-msg { font-size: 0.75rem; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN VIEW -->
+    <div id="loginView">
+        <div class="login-left">
+            <div class="login-brand">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <span style="font-size: 1.25rem; font-weight: 700; letter-spacing: 0.05em;">NEXUS</span>
+            </div>
+            <div>
+                <h2 style="font-size: 2.5rem; margin-bottom: 1rem; line-height: 1.2;">Secure Infrastructure Control</h2>
+                <p style="color: #a5b4fc; font-size: 1.125rem;">Advanced orchestration for your connected web environments.</p>
+            </div>
+        </div>
+        <div class="login-right">
+            <div class="login-box">
+                <div class="login-header">
+                    <h1>Welcome back</h1>
+                    <p class="text-secondary text-sm">Enter administrative credentials</p>
+                </div>
+                <div id="loginAlert" class="alert alert-error hidden">
+                    <span id="loginAlertMsg">Invalid credentials.</span>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="username" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="password" class="form-input" required>
+                    </div>
+                    <button type="submit" id="loginBtn" class="btn btn-primary"><span id="loginBtnText">Sign In</span></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SHELL -->
+    <div id="appView" class="hidden">
+        <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 24px; height: 24px; color: var(--brand-primary);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg> NEXUS
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> Dashboard</div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div><div style="font-weight: 500; font-size: 0.875rem;" id="userNameDisplay">Admin</div><div style="font-size: 0.75rem; color: var(--text-muted);">Administrator</div></div>
+                </div>
+                <button id="logoutBtn" class="btn btn-ghost">Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button id="hamburgerBtn" class="hamburger"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+                    <h1 style="font-size: 1.125rem;">Infrastructure Overview</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- TERMINAL BUTTON -->
+                    <button class="icon-btn" onclick="openTerminal('master', 'Master Server')" title="Master Logs" style="color: var(--status-success); background: var(--status-success-bg);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+                    </button>
+                    <button class="icon-btn" id="refreshGlobalBtn" title="Refresh"><svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+                    <button class="icon-btn" id="themeToggleBtn"><svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg></button>
+                </div>
+            </header>
+
+            <div class="content-scroll">
+                <div class="max-w-7xl">
+                    <div class="metrics-grid">
+                        <div class="metric-card"><div class="metric-title">Total Configured</div><div class="metric-value" id="metricTotal">-</div></div>
+                        <div class="metric-card" style="border-left: 3px solid var(--status-success);"><div class="metric-title">Online</div><div class="metric-value" id="metricOnline">-</div></div>
+                        <div class="metric-card" style="border-left: 3px solid var(--status-warning);"><div class="metric-title">Needs Install</div><div class="metric-value" id="metricWarning">-</div></div>
+                        <div class="metric-card" style="border-left: 3px solid var(--status-error);"><div class="metric-title">Offline</div><div class="metric-value" id="metricOffline">-</div></div>
+                    </div>
+
+                    <div class="actions-bar">
+                        <div class="search-wrapper">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="searchInput" class="search-input" placeholder="Search websites or URLs...">
+                        </div>
+                        <div class="filters">
+                            <select id="filterStatus" class="select-input">
+                                <option value="all">All Status</option>
+                                <option value="online">Online</option>
+                                <option value="warning">Install Needed</option>
+                                <option value="offline">Offline</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="websiteGrid" class="websites-grid"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Website Details</h3>
+                <button class="icon-btn" onclick="document.getElementById('detailsModal').classList.remove('open')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value" id="mdlName"></span></div>
+                <div class="detail-row"><span class="detail-label">URL</span><span class="detail-value"><a href="#" id="mdlUrl" target="_blank" style="color:var(--brand-primary);"></a></span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" id="mdlStatus"></span></div>
+                <div class="detail-row"><span class="detail-label">Internal ID</span><span class="detail-value" id="mdlId"></span></div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="mdlOpenBtn" target="_blank" class="btn btn-primary" style="width:auto;">Open App</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TERMINAL MODAL -->
+    <div id="terminalModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 900px; width: 95%; background: #111827; border: 1px solid #374151;">
+            <div class="modal-header" style="border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="terminalTitle" style="color: #10b981; font-family: 'Courier New', Courier, monospace; margin: 0; flex: 1;">root@nexus:~# Master Logs</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="icon-btn" onclick="copyLogs()" title="Copy Logs" style="color: #60a5fa; background: rgba(96, 165, 250, 0.1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                    <button class="icon-btn" onclick="closeTerminal()" title="Close" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 0; background: #050914;">
+                <div id="terminalOutput">Fetching live server logs...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        const State = { websites: [], filtered: [], isLoading: false, searchQuery: '', filter: 'all', theme: document.documentElement.getAttribute('data-theme') || 'light' };
+        let currentTerminalId = 'master';
+        
+        const DOM = {
+            views: { login: document.getElementById('loginView'), app: document.getElementById('appView') },
+            login: { form: document.getElementById('loginForm'), btn: document.getElementById('loginBtn'), alert: document.getElementById('loginAlert'), alertMsg: document.getElementById('loginAlertMsg') },
+            sidebar: { el: document.getElementById('sidebar'), backdrop: document.getElementById('sidebarBackdrop'), hamburger: document.getElementById('hamburgerBtn'), logout: document.getElementById('logoutBtn') },
+            topbar: { refresh: document.getElementById('refreshGlobalBtn'), refreshIcon: document.getElementById('refreshIcon'), theme: document.getElementById('themeToggleBtn'), themeIcon: document.getElementById('themeIcon') },
+            dashboard: { grid: document.getElementById('websiteGrid'), search: document.getElementById('searchInput'), filterStatus: document.getElementById('filterStatus') },
+            metrics: { total: document.getElementById('metricTotal'), online: document.getElementById('metricOnline'), offline: document.getElementById('metricOffline'), warning: document.getElementById('metricWarning') },
+            modal: { overlay: document.getElementById('detailsModal'), name: document.getElementById('mdlName'), url: document.getElementById('mdlUrl'), status: document.getElementById('mdlStatus'), id: document.getElementById('mdlId'), openBtn: document.getElementById('mdlOpenBtn') },
+            toast: document.getElementById('toastContainer')
+        };
+
+        const escapeHTML = str => { const div = document.createElement('div'); div.textContent = str; return div.innerHTML; };
+        const safeUrl = url => { try { const p = new URL(url, window.location.origin); return ['http:', 'https:'].includes(p.protocol) ? p.href : '#'; } catch { return '#'; } };
+
+        const determineRealStatus = (site) => {
+            if (site.isInstalling) return { label: 'Installing...', code: 'warning' };
+            if (site.needsInstall) return { label: 'Install Req.', code: 'warning' };
+            const s = (site.status || '').toLowerCase();
+            if (s.includes('online')) return site.isRunning ? { label: 'Online', code: 'online' } : { label: 'Booting/Failed', code: 'offline' };
+            return { label: site.status || 'Offline', code: 'offline' };
+        };
+
+        const showToast = (message, type = 'info') => {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<div class="toast-content"><div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div><div class="toast-msg">${escapeHTML(message)}</div></div>`;
+            DOM.toast.appendChild(toast);
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+        };
+
+        const updateMetrics = () => {
+            DOM.metrics.total.innerText = State.websites.length;
+            const statuses = State.websites.map(s => determineRealStatus(s).code);
+            DOM.metrics.online.innerText = statuses.filter(s => s === 'online').length;
+            DOM.metrics.offline.innerText = statuses.filter(s => s === 'offline').length;
+            DOM.metrics.warning.innerText = statuses.filter(s => s === 'warning').length;
+        };
+
+        const renderWebsites = () => {
+            if (State.isLoading) return DOM.dashboard.grid.innerHTML = '<div class="empty-state">Loading...</div>';
+            if (State.filtered.length === 0) return DOM.dashboard.grid.innerHTML = '<div class="empty-state">No websites found.</div>';
+
+            DOM.dashboard.grid.innerHTML = State.filtered.map(site => {
+                const statusInfo = determineRealStatus(site);
+                const sName = escapeHTML(site.name || 'Unknown');
+                let footerAction = `<button class="btn btn-ghost" style="padding:0; width:auto; font-size:0.75rem; color:var(--brand-primary);" onclick="openDetails('${site.id}')">Details &rarr;</button>`;
+                
+                if (site.isInstalling) {
+                    footerAction = `<button class="btn" style="padding:0.375rem 0.75rem; font-size:0.75rem; border-radius:4px; opacity:0.7; cursor:not-allowed; background:var(--bg-surface-hover); color:var(--text-secondary);" disabled>Processing...</button>`;
+                } else if (site.needsInstall) {
+                    footerAction = `<button class="btn btn-primary" style="padding:0.25rem 0.75rem; font-size:0.75rem; border-radius:4px;" onclick="triggerInstall('${site.id}', this)">Run npm install</button>`;
+                }
+
+                return `
+                    <div class="website-card">
+                        <div class="card-header">
+                            <div class="card-icon-title">
+                                <div class="site-favicon">${sName.charAt(0)}</div>
+                                <div><div class="site-name">${sName}</div><div class="site-url">${escapeHTML(site.url)}</div></div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="icon-btn drop-btn" onclick="toggleDropdown(this, event)">...</button>
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-item" onclick="openDetails('${site.id}')">View Details</div>
+                                    <div class="dropdown-item" onclick="openTerminal('${site.id}', '${sName}')">View Logs</div>
+                                    ${!site.isInstalling && !site.needsInstall && site.status.toLowerCase() === 'online' ? `<div class="dropdown-item" style="color: var(--status-warning);" onclick="restartServer('${site.id}')">Restart Process</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge ${statusInfo.code}">${escapeHTML(statusInfo.label)}</span>
+                        <div class="card-footer"><span>ID: ${escapeHTML(site.id)}</span>${footerAction}</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const applyFilters = () => {
+            let res = [...State.websites];
+            if (State.searchQuery) {
+                const q = State.searchQuery.toLowerCase();
+                res = res.filter(s => (s.name || '').toLowerCase().includes(q) || (s.url || '').toLowerCase().includes(q));
+            }
+            if (State.filter !== 'all') res = res.filter(s => determineRealStatus(s).code === State.filter);
+            State.filtered = res;
+            renderWebsites();
+        };
+
+        const fetchWebsites = async () => {
+            DOM.topbar.refreshIcon.classList.add('spinner');
+            try {
+                const res = await fetch('/api/websites');
+                if (res.status === 401) return handleAuthFailure();
+                const data = await res.json();
+                State.websites = Array.isArray(data.websites) ? data.websites : [];
+                updateMetrics(); applyFilters();
+            } catch { showToast('Failed to connect', 'error'); } 
+            finally { DOM.topbar.refreshIcon.classList.remove('spinner'); }
+        };
+
+        window.triggerInstall = async (id, btn) => {
+            const originalText = btn.innerText;
+            btn.innerHTML = 'Installing...'; btn.disabled = true;
+            showToast('NPM install requested. Open Terminal to see live progress.', 'info');
+            try {
+                const res = await fetch('/api/action/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                const data = await res.json();
+                if (data.success) { showToast(data.message, 'success'); fetchWebsites(); } 
+                else { showToast(data.message, 'error'); btn.innerHTML = originalText; btn.disabled = false; }
+            } catch { showToast('Network error during install', 'error'); btn.innerHTML = originalText; btn.disabled = false; }
+        };
+
+        window.restartServer = async (id) => {
+            showToast('Restart command sent...', 'info');
+            try {
+                const res = await fetch('/api/action/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                const data = await res.json();
+                if (data.success) { showToast(data.message, 'success'); setTimeout(fetchWebsites, 1500); } 
+                else { showToast(data.message, 'error'); }
+            } catch { showToast('Network error during restart', 'error'); }
+        };
+
+        // ==========================================
+        // TERMINAL LIVE LOGS (ISOLATED & COPYABLE)
+        // ==========================================
+        let logInterval = null;
+
+        window.openTerminal = (id = 'master', name = 'Master Server') => {
+            currentTerminalId = id;
+            document.getElementById('terminalTitle').innerText = `root@nexus:~# ${name} Logs`;
+            document.getElementById('terminalModal').classList.add('open');
+            document.getElementById('terminalModal').classList.remove('hidden');
+            fetchLogs(); 
+            logInterval = setInterval(fetchLogs, 1000); 
+        };
+
+        window.closeTerminal = () => {
+            document.getElementById('terminalModal').classList.remove('open');
+            setTimeout(() => document.getElementById('terminalModal').classList.add('hidden'), 300);
+            if(logInterval) clearInterval(logInterval);
+        };
+
+        window.copyLogs = () => {
+            const termOutput = document.getElementById('terminalOutput');
+            let textToCopy = termOutput.innerText;
+            
+            // Clean up the blinking cursor at the end
+            textToCopy = textToCopy.replace(/_\n?$/, '').trim();
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast('Logs copied to clipboard!', 'success');
+            }).catch(err => {
+                showToast('Failed to copy logs', 'error');
+            });
+        };
+
+        const fetchLogs = async () => {
+            try {
+                const res = await fetch(`/api/logs?id=${currentTerminalId}`);
+                const data = await res.json();
+                const termOutput = document.getElementById('terminalOutput');
+                
+                const isScrolledToBottom = termOutput.scrollHeight - termOutput.clientHeight <= termOutput.scrollTop + 20;
+                
+                if (data.logs && data.logs.length > 0) {
+                    termOutput.innerHTML = data.logs.map(log => {
+                        const color = log.type === 'ERROR' ? '#ef4444' : '#10b981';
+                        return `<span style="color: #6b7280;">[${log.timestamp}]</span> <span style="color: ${color};">${escapeHTML(log.message)}</span>`;
+                    }).join('<br>') + '<br><span class="cursor-blink">_</span>';
+                } else {
+                    termOutput.innerHTML = '<span style="color: #6b7280;">No logs available yet...</span><br><span class="cursor-blink">_</span>';
+                }
+                
+                if (isScrolledToBottom) termOutput.scrollTop = termOutput.scrollHeight;
+            } catch (err) {
+                console.error("Failed to fetch logs", err);
+            }
+        };
+
+        const handleAuthSuccess = () => { DOM.views.login.classList.add('hidden'); DOM.views.app.classList.remove('hidden'); fetchWebsites(); };
+        const handleAuthFailure = () => { DOM.views.app.classList.add('hidden'); DOM.views.login.classList.remove('hidden'); };
+
+        const checkAuth = async () => { try { const res = await fetch('/api/check-auth'); if ((await res.json()).success) handleAuthSuccess(); else handleAuthFailure(); } catch { handleAuthFailure(); } };
+
+        DOM.login.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const [u, p] = [document.getElementById('username').value, document.getElementById('password').value];
+            try { const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: u, password: p}) }); if ((await res.json()).success) handleAuthSuccess(); else DOM.login.alert.classList.remove('hidden'); } catch {}
+        });
+
+        DOM.sidebar.logout.addEventListener('click', async () => { await fetch('/api/logout', { method: 'POST' }); handleAuthFailure(); });
+        DOM.dashboard.search.addEventListener('input', e => { State.searchQuery = e.target.value; applyFilters(); });
+        DOM.dashboard.filterStatus.addEventListener('change', e => { State.filter = e.target.value; applyFilters(); });
+        DOM.topbar.refresh.addEventListener('click', fetchWebsites);
+
+        window.toggleDropdown = (btn, event) => { event.stopPropagation(); const p = btn.parentElement; const w = p.classList.contains('open'); document.querySelectorAll('.dropdown.open').forEach(el => el.classList.remove('open')); if (!w) p.classList.add('open'); };
+        document.addEventListener('click', () => document.querySelectorAll('.dropdown.open').forEach(el => el.classList.remove('open')));
+
+        window.openDetails = (id) => {
+            const site = State.websites.find(s => s.id === id);
+            if (!site) return;
+            const statusInfo = determineRealStatus(site);
+            DOM.modal.name.innerText = site.name; DOM.modal.url.innerText = site.url; DOM.modal.url.href = safeUrl(site.url);
+            DOM.modal.status.innerHTML = `<span class="badge ${statusInfo.code}">${escapeHTML(statusInfo.label)}</span>`;
+            DOM.modal.id.innerText = site.id; DOM.modal.openBtn.href = safeUrl(site.url);
+            DOM.modal.overlay.classList.add('open');
+        };
+
+        checkAuth();
+    </script>
+</body>
+</html>

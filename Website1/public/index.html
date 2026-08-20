@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Store | Premium Gear</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"></path></svg>
+                Alpha Store
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Home</a></li>
+                <li><a href="#">Shop</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Upgrade Your Workspace</h1>
+            <p>Discover premium gear designed for professionals and creators. High performance meets elegant design.</p>
+            <button class="btn btn-primary">Shop Collection</button>
+        </div>
+    </header>
+
+    <!-- Main Content: Product Grid -->
+    <main class="container">
+        <div class="section-header">
+            <h2>Featured Products</h2>
+            <p>Directly fetched from the Alpha Store Node.js API</p>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loader" class="loader-container">
+            <div class="spinner"></div>
+            <p>Loading products...</p>
+        </div>
+
+        <!-- Products will be injected here via JS -->
+        <div id="productGrid" class="product-grid hidden"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Alpha Store. Managed securely by NEXUS Master Plane.</p>
+    </footer>
+
+    <!-- Load Application Logic -->
+    <script src="./js/app.js"></script>
+</body>
+</html>
