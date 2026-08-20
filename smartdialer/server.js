@@ -9,6 +9,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const app = express();
 app.use(express.json({ limit: '256kb' }));
+app.use(express.urlencoded({ extended: true, limit: '256kb' })); // Added urlencoded support for Android clients
 app.use(cors());
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,7 +57,7 @@ const checkFirebase = (req, res, next) => {
 };
 
 // ============================================================
-// BASIC RATE LIMITER
+// BASIC RATE LIMITER (in-memory, per-IP)
 // ============================================================
 const rateLimitMap = new Map();
 const RATE_WINDOW_MS = 60 * 1000;
@@ -80,16 +81,16 @@ function rateLimit(req, res, next) {
 app.use(rateLimit);
 
 // ============================================================
-// INPUT VALIDATION HELPERS
+// INPUT VALIDATION HELPERS (EASED FOR LOGIN)
 // ============================================================
-function isValidUsername(u) { return typeof u === 'string' && u.trim().length >= 1; }
-function isValidPassword(p) { return typeof p === 'string' && p.length >= 1; }
-function isValidStatus(s) { return ['ACTIVE','SUSPENDED','DISABLED','REVOKED'].includes(s); }
+function isValidUsername(u) { return u != null && String(u).trim().length >= 1; }
+function isValidPassword(p) { return p != null && String(p).length >= 1; }
+function isValidStatus(s) { return s != null && ['ACTIVE','SUSPENDED','DISABLED','REVOKED'].includes(String(s).toUpperCase()); }
 
 // ============================================================
-// ADMIN SESSION MANAGEMENT
+// ADMIN SESSION MANAGEMENT (server-side, expiring, revocable)
 // ============================================================
-const ADMIN_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
+const ADMIN_SESSION_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 async function createAdminSession(username, ip) {
     const token = crypto.randomBytes(48).toString('hex');
@@ -126,10 +127,10 @@ async function revokeAdminSession(token) {
 // ============================================================
 // AUDIT LOG
 // ============================================================
-async function auditLog(adminUser, action, username, deviceId, reason, result) {
+async function auditLog(admin, action, username, deviceId, reason, result) {
     try {
         await db.ref('audit_log').push({
-            admin: adminUser || 'unknown',
+            admin: admin || 'unknown',
             action,
             username: username || '',
             device_id: deviceId || '',
@@ -141,13 +142,14 @@ async function auditLog(adminUser, action, username, deviceId, reason, result) {
 }
 
 // ============================================================
-// ADMIN LOGIN
+// ADMIN LOGIN (bcrypt + session token)
 // ============================================================
 app.post('/api/admin/login', checkFirebase, async (req, res) => {
-    const { username, password } = req.body;
+    const username = req.body.username || req.body.user;
+    const password = req.body.password || req.body.pass;
     const masterUser = process.env.ADMIN_USERNAME;
-    const masterHash = process.env.ADMIN_PASSWORD_HASH;
-    const masterPlain = process.env.ADMIN_PASSWORD;
+    const masterHash = process.env.ADMIN_PASSWORD_HASH;     // bcrypt hash (preferred)
+    const masterPlain = process.env.ADMIN_PASSWORD;          // legacy plaintext (deprecated)
 
     if (!masterUser || (!masterHash && !masterPlain)) {
         return res.status(500).json({ success: false, message: "Admin credentials not configured." });
@@ -161,6 +163,7 @@ app.post('/api/admin/login', checkFirebase, async (req, res) => {
     if (masterHash) {
         try { ok = await bcrypt.compare(password, masterHash); } catch (_) { ok = false; }
     } else {
+        // Legacy fallback (will be removed once all envs set ADMIN_PASSWORD_HASH)
         ok = (password === masterPlain);
     }
     if (!ok) {
@@ -189,6 +192,7 @@ app.get('/api/admin/me', checkFirebase, async (req, res) => {
     res.json({ success: true, username: s.username, expires_at: s.expires_at });
 });
 
+// Authorization middleware
 const verifyAdmin = async (req, res, next) => {
     const token = req.headers['authorization'];
     const s = await verifyAdminSession(token);
@@ -209,10 +213,12 @@ async function getUser(username) {
     return snap.val();
 }
 
+// Migrate legacy fields on-the-fly
 async function migrateLegacyUser(username, user) {
     if (!user) return user;
     const updates = {};
     if (user.status === undefined) {
+        // is_blocked=true (legacy) -> SUSPENDED; otherwise ACTIVE
         updates.status = user.is_blocked ? 'SUSPENDED' : 'ACTIVE';
     }
     if (user.session_version === undefined) updates.session_version = 0;
@@ -232,6 +238,7 @@ app.get('/api/users', verifyAdmin, checkFirebase, async (req, res) => {
     try {
         const snap = await db.ref('users').once('value');
         const users = snap.val() || {};
+        // Strip sensitive password fields before returning
         const sanitized = {};
         for (const [u, info] of Object.entries(users)) {
             sanitized[u] = {
@@ -255,6 +262,7 @@ app.get('/api/users/:username', verifyAdmin, checkFirebase, async (req, res) => 
         user = await migrateLegacyUser(u, user);
         delete user.password;
         delete user.password_hash;
+        // Fetch last 10 audit entries for this user
         const auditSnap = await db.ref('audit_log').orderByChild('username').equalTo(u).limitToLast(10).once('value');
         const audit = [];
         auditSnap.forEach(cs => { audit.push(cs.val()); });
@@ -265,7 +273,8 @@ app.get('/api/users/:username', verifyAdmin, checkFirebase, async (req, res) => 
 });
 
 app.post('/api/users/create', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username, password } = req.body;
+    const username = req.body.username || req.body.user;
+    const password = req.body.password || req.body.pass;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     if (!isValidPassword(password)) return res.status(400).json({ success: false, message: "Invalid password" });
     try {
@@ -273,9 +282,17 @@ app.post('/api/users/create', verifyAdmin, checkFirebase, async (req, res) => {
         if (existing) return res.status(409).json({ success: false, message: "User already exists" });
         const hash = await hashPassword(password);
         await db.ref(`users/${username}`).set({
-            password: password, password_hash: hash, status: 'ACTIVE', is_blocked: false, 
-            force_logout: false, fcm_token: '', device_binding_enabled: true, session_version: 0, 
-            suspension_reason: '', suspended_at: 0, suspended_by: ''
+            password: password,           // legacy compat (will be removed in future migration)
+            password_hash: hash,
+            status: 'ACTIVE',
+            is_blocked: false,            // legacy
+            force_logout: false,          // legacy
+            fcm_token: '',
+            device_binding_enabled: true,
+            session_version: 0,
+            suspension_reason: '',
+            suspended_at: 0,
+            suspended_by: ''
         });
         await auditLog(req.adminUser, 'CREATE_ACCOUNT', username, '', '', 'SUCCESS');
         res.json({ success: true, message: `User ${username} created` });
@@ -286,14 +303,17 @@ app.post('/api/users/create', verifyAdmin, checkFirebase, async (req, res) => {
 });
 
 app.post('/api/users/update-password', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username, newPassword } = req.body;
+    const username = req.body.username || req.body.user;
+    const newPassword = req.body.newPassword || req.body.password;
     if (!isValidUsername(username) || !isValidPassword(newPassword)) {
         return res.status(400).json({ success: false, message: "Invalid input" });
     }
     try {
         const hash = await hashPassword(newPassword);
         await db.ref(`users/${username}`).update({
-            password: newPassword, password_hash: hash, force_logout: true, 
+            password: newPassword,        // legacy
+            password_hash: hash,
+            force_logout: true,           // legacy - force fresh login
             session_version: (await getUser(username))?.session_version + 1 || 0
         });
         await auditLog(req.adminUser, 'UPDATE_PASSWORD', username, '', '', 'SUCCESS');
@@ -304,7 +324,7 @@ app.post('/api/users/update-password', verifyAdmin, checkFirebase, async (req, r
 });
 
 app.post('/api/users/delete', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username } = req.body;
+    const username = req.body.username || req.body.user;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         const u = await getUser(username);
@@ -320,21 +340,31 @@ app.post('/api/users/delete', verifyAdmin, checkFirebase, async (req, res) => {
 // ADMIN: SUSPEND / RESTORE / FORCE-LOGOUT / UNBIND
 // ============================================================
 app.post('/api/admin/suspend', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username, reason } = req.body;
+    const username = req.body.username || req.body.user;
+    const reason = req.body.reason;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         const u = await getUser(username);
         if (!u) return res.status(404).json({ success: false, message: "User not found" });
         const nextSessionVersion = (u.session_version || 0) + 1;
         await db.ref(`users/${username}`).update({
-            status: 'SUSPENDED', is_blocked: true, suspension_reason: reason || '', 
-            suspended_at: Date.now(), suspended_by: req.adminUser, force_logout: true, session_version: nextSessionVersion
+            status: 'SUSPENDED',
+            is_blocked: true,                                  // legacy compat
+            suspension_reason: reason || '',
+            suspended_at: Date.now(),
+            suspended_by: req.adminUser,
+            force_logout: true,                                // legacy
+            session_version: nextSessionVersion
         });
+        // Mark session inactive
         if (u.session && u.session.session_id) {
             await db.ref(`users/${username}/session`).update({ active: false });
         }
+        // Push FCM-equivalent command
         await pushCommand(username, 'SUSPEND_ACCOUNT', reason || '');
+        // Try real FCM if available
         await tryFcm(username, { command: 'SUSPEND_ACCOUNT', reason: reason || '' });
+
         await auditLog(req.adminUser, 'SUSPEND', username, u.device?.device_id || '', reason || '', 'SUCCESS');
         res.json({ success: true, message: `User ${username} suspended.` });
     } catch (e) {
@@ -344,19 +374,30 @@ app.post('/api/admin/suspend', verifyAdmin, checkFirebase, async (req, res) => {
 });
 
 app.post('/api/admin/restore', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username } = req.body;
+    const username = req.body.username || req.body.user;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         const u = await getUser(username);
         if (!u) return res.status(404).json({ success: false, message: "User not found" });
         const nextSessionVersion = (u.session_version || 0) + 1;
         await db.ref(`users/${username}`).update({
-            status: 'ACTIVE', is_blocked: false, suspension_reason: '', suspended_at: 0, 
-            suspended_by: '', force_logout: true, session_version: nextSessionVersion
+            status: 'ACTIVE',
+            is_blocked: false,
+            suspension_reason: '',
+            suspended_at: 0,
+            suspended_by: '',
+            force_logout: true,                               // force fresh login
+            session_version: nextSessionVersion
         });
-        await db.ref(`users/${username}/session`).update({ active: false, session_id: null, last_verified_at: 0 });
+        // Invalidate old session (preserve device info!)
+        await db.ref(`users/${username}/session`).update({
+            active: false,
+            session_id: null,
+            last_verified_at: 0
+        });
         await pushCommand(username, 'RESTORE_ACCOUNT', '');
         await tryFcm(username, { command: 'RESTORE_ACCOUNT' });
+
         await auditLog(req.adminUser, 'RESTORE', username, u.device?.device_id || '', '', 'SUCCESS');
         res.json({ success: true, message: `User ${username} restored. Fresh login required.` });
     } catch (e) {
@@ -366,18 +407,22 @@ app.post('/api/admin/restore', verifyAdmin, checkFirebase, async (req, res) => {
 });
 
 app.post('/api/admin/force-logout', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username } = req.body;
+    const username = req.body.username || req.body.user;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         const u = await getUser(username);
         if (!u) return res.status(404).json({ success: false, message: "User not found" });
         const nextSessionVersion = (u.session_version || 0) + 1;
-        await db.ref(`users/${username}`).update({ force_logout: true, session_version: nextSessionVersion });
+        await db.ref(`users/${username}`).update({
+            force_logout: true,                               // legacy compat
+            session_version: nextSessionVersion
+        });
         if (u.session && u.session.session_id) {
             await db.ref(`users/${username}/session`).update({ active: false });
         }
         await pushCommand(username, 'LOGOUT_NOW', '');
         await tryFcm(username, { command: 'LOGOUT_NOW' });
+
         await auditLog(req.adminUser, 'FORCE_LOGOUT', username, u.device?.device_id || '', '', 'SUCCESS');
         res.json({ success: true, message: `Force logout sent to ${username}` });
     } catch (e) {
@@ -387,7 +432,7 @@ app.post('/api/admin/force-logout', verifyAdmin, checkFirebase, async (req, res)
 });
 
 app.post('/api/admin/unbind-device', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username } = req.body;
+    const username = req.body.username || req.body.user;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         const u = await getUser(username);
@@ -401,8 +446,10 @@ app.post('/api/admin/unbind-device', verifyAdmin, checkFirebase, async (req, res
     }
 });
 
+// Legacy block endpoint - now routes through suspend/restore
 app.post('/api/admin/block', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username, blockStatus } = req.body;
+    const username = req.body.username || req.body.user;
+    const blockStatus = req.body.blockStatus;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         const u = await getUser(username);
@@ -410,22 +457,32 @@ app.post('/api/admin/block', verifyAdmin, checkFirebase, async (req, res) => {
         if (blockStatus) {
             const nextSessionVersion = (u.session_version || 0) + 1;
             await db.ref(`users/${username}`).update({
-                status: 'SUSPENDED', is_blocked: true, suspension_reason: 'Legacy block', 
-                suspended_at: Date.now(), suspended_by: req.adminUser, force_logout: true, session_version: nextSessionVersion
+                status: 'SUSPENDED',
+                is_blocked: true,
+                suspension_reason: 'Legacy block',
+                suspended_at: Date.now(),
+                suspended_by: req.adminUser,
+                force_logout: true,
+                session_version: nextSessionVersion
             });
             await pushCommand(username, 'SUSPEND_ACCOUNT', 'Legacy block');
             await auditLog(req.adminUser, 'SUSPEND', username, u.device?.device_id || '', 'Legacy block', 'SUCCESS');
-            return res.json({ success: true, message: `User ${username} suspended` });
+            return res.json({ success: true, message: `User ${username} suspended (legacy block=true)` });
         } else {
             const nextSessionVersion = (u.session_version || 0) + 1;
             await db.ref(`users/${username}`).update({
-                status: 'ACTIVE', is_blocked: false, suspension_reason: '', suspended_at: 0, 
-                suspended_by: '', force_logout: true, session_version: nextSessionVersion
+                status: 'ACTIVE',
+                is_blocked: false,
+                suspension_reason: '',
+                suspended_at: 0,
+                suspended_by: '',
+                force_logout: true,
+                session_version: nextSessionVersion
             });
             await db.ref(`users/${username}/session`).update({ active: false, session_id: null });
             await pushCommand(username, 'RESTORE_ACCOUNT', '');
             await auditLog(req.adminUser, 'RESTORE', username, u.device?.device_id || '', 'Legacy unblock', 'SUCCESS');
-            return res.json({ success: true, message: `User ${username} restored` });
+            return res.json({ success: true, message: `User ${username} restored (legacy block=false)` });
         }
     } catch (e) {
         res.status(500).json({ success: false, error: e.message });
@@ -433,7 +490,8 @@ app.post('/api/admin/block', verifyAdmin, checkFirebase, async (req, res) => {
 });
 
 app.post('/api/admin/notify', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username, message } = req.body;
+    const username = req.body.username || req.body.user;
+    const message = req.body.message;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     try {
         await pushCommand(username, 'SHOW_MESSAGE', message || '');
@@ -446,7 +504,9 @@ app.post('/api/admin/notify', verifyAdmin, checkFirebase, async (req, res) => {
 });
 
 app.post('/api/admin/send-command', verifyAdmin, checkFirebase, async (req, res) => {
-    const { username, type, payload } = req.body;
+    const username = req.body.username || req.body.user;
+    const type = req.body.type;
+    const payload = req.body.payload;
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid username" });
     const allowed = ['LOGOUT_NOW','SUSPEND_ACCOUNT','RESTORE_ACCOUNT','SHOW_MESSAGE','REFRESH_SESSION'];
     if (!allowed.includes(type)) return res.status(400).json({ success: false, message: "Unknown command type" });
@@ -460,6 +520,9 @@ app.post('/api/admin/send-command', verifyAdmin, checkFirebase, async (req, res)
     }
 });
 
+// ============================================================
+// AUDIT LOG ENDPOINT
+// ============================================================
 app.get('/api/audit-log', verifyAdmin, checkFirebase, async (req, res) => {
     try {
         const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
@@ -477,83 +540,99 @@ app.get('/api/audit-log', verifyAdmin, checkFirebase, async (req, res) => {
 // APP-FACING ENDPOINTS (called by Android app)
 // ============================================================
 app.post('/api/auth/login', checkFirebase, async (req, res) => {
-    // 🔥 DEBUG LOG: Yeh batayega ki server ko body mili ya nahi
-    console.log("🔴 [C2 LOGIN] Body received:", JSON.stringify(req.body));
-    
-    const { username, password, device } = req.body;
+    const username = req.body.username || req.body.user;
+    const password = req.body.password || req.body.pass;
+    const device = req.body.device || req.body.deviceInfo;
     
     if (!isValidUsername(username) || !isValidPassword(password)) {
-        console.log("🔴 [C2 LOGIN] Validation FAILED. Username:", username, "Password:", password ? "***" : "null");
         return res.status(400).json({ success: false, message: "Invalid input" });
     }
-    
     try {
         let user = await getUser(username);
-        if (!user) {
-            console.log("🔴 [C2 LOGIN] User not found in DB:", username);
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
         user = await migrateLegacyUser(username, user);
 
+        // Verify password (prefer hash, fall back to legacy plaintext)
         let pwOk = false;
         if (user.password_hash) {
             try { pwOk = await bcrypt.compare(password, user.password_hash); } catch (_) { pwOk = false; }
         }
-        if (!pwOk && user.password === password) pwOk = true;
+        if (!pwOk && user.password === password) pwOk = true; // legacy
 
-        if (!pwOk) {
-            console.log("🔴 [C2 LOGIN] Password mismatch for user:", username);
-            return res.status(401).json({ success: false, message: "Invalid credentials" });
-        }
+        if (!pwOk) return res.status(401).json({ success: false, message: "Invalid credentials" });
 
         const status = (user.status || 'ACTIVE').toUpperCase();
         if (status === 'SUSPENDED') {
-            return res.json({ success: true, status: 'SUSPENDED', suspension_reason: user.suspension_reason || '', session_id: null });
+            return res.json({
+                success: true,
+                status: 'SUSPENDED',
+                suspension_reason: user.suspension_reason || '',
+                session_id: null
+            });
         }
         if (status === 'DISABLED') return res.json({ success: true, status: 'DISABLED', session_id: null });
         if (status === 'REVOKED') return res.json({ success: true, status: 'REVOKED', session_id: null });
         if (status !== 'ACTIVE') return res.status(403).json({ success: false, message: "Account not active" });
 
+        // Device binding check
         const deviceId = device?.device_id;
         if (user.device_binding_enabled && user.device && user.device.device_id && deviceId &&
             user.device.device_id !== deviceId) {
             await auditLog(username, 'DEVICE_MISMATCH', username, deviceId, `Expected ${user.device.device_id}`, 'FAILED');
-            return res.status(403).json({ success: false, message: "Account is bound to another device.", code: 'DEVICE_MISMATCH' });
+            return res.status(403).json({
+                success: false,
+                message: "Account is bound to another device. Contact admin to unbind.",
+                code: 'DEVICE_MISMATCH'
+            });
         }
 
+        // Issue new session
         const sessionId = crypto.randomBytes(24).toString('hex');
         const now = Date.now();
         const nextSessionVersion = (user.session_version || 0) + 1;
         const sessionObj = {
-            session_id: sessionId, created_at: now, last_verified_at: now, 
-            session_version: nextSessionVersion, device_id: deviceId || '', active: true
+            session_id: sessionId,
+            created_at: now,
+            last_verified_at: now,
+            session_version: nextSessionVersion,
+            device_id: deviceId || '',
+            active: true
         };
         const deviceObj = {
-            ...(device || {}), session_id: sessionId, online: true, last_seen: now, 
-            first_seen: user.device?.first_seen || now, fcm_token: device?.fcm_token || user.device?.fcm_token || ''
+            ...(device || {}),
+            session_id: sessionId,
+            online: true,
+            last_seen: now,
+            first_seen: user.device?.first_seen || now,   // preserve existing first_seen
+            fcm_token: device?.fcm_token || user.device?.fcm_token || ''
         };
         await db.ref(`users/${username}`).update({
-            session_version: nextSessionVersion, force_logout: false, is_blocked: false, 
+            session_version: nextSessionVersion,
+            force_logout: false,
+            is_blocked: false,
             fcm_token: device?.fcm_token || user.fcm_token || ''
         });
         await db.ref(`users/${username}/session`).set(sessionObj);
         await db.ref(`users/${username}/device`).set(deviceObj);
 
         await auditLog(username, 'USER_LOGIN', username, deviceId || '', '', 'SUCCESS');
-        console.log("🟢 [C2 LOGIN] Login SUCCESS for:", username);
-        
         res.json({
-            success: true, status: 'ACTIVE', session_id: sessionId, 
-            session_version: nextSessionVersion, device_id: deviceId
+            success: true,
+            status: 'ACTIVE',
+            session_id: sessionId,
+            session_version: nextSessionVersion,
+            device_id: deviceId
         });
     } catch (e) {
-        console.error("🔴 [C2 LOGIN] Server Error:", e.message);
         res.status(500).json({ success: false, error: e.message });
     }
 });
 
 app.post('/api/session/validate', checkFirebase, async (req, res) => {
-    const { username, session_id, device_id } = req.body;
+    const username = req.body.username || req.body.user;
+    const session_id = req.body.session_id || req.body.sessionId;
+    const device_id = req.body.device_id || req.body.deviceId;
+    
     if (!isValidUsername(username) || !session_id) {
         return res.status(400).json({ success: false, message: "Invalid input" });
     }
@@ -562,19 +641,30 @@ app.post('/api/session/validate', checkFirebase, async (req, res) => {
         if (!user) return res.json({ success: true, status: 'REVOKED', session_valid: false, device_valid: false });
         user = await migrateLegacyUser(username, user);
         const status = (user.status || 'ACTIVE').toUpperCase();
+
+        // Legacy is_blocked=true should also read as SUSPENDED
         const effectiveStatus = (user.is_blocked && status === 'ACTIVE') ? 'SUSPENDED' : status;
 
         const session = user.session || {};
-        const sessionValid = !!session.active && session.session_id === session_id && (session.session_version || 0) === (user.session_version || 0);
-        const deviceValid = !user.device_binding_enabled || !user.device || !user.device.device_id || user.device.device_id === device_id;
+        const sessionValid = !!session.active
+            && session.session_id === session_id
+            && (session.session_version || 0) === (user.session_version || 0);
+        const deviceValid = !user.device_binding_enabled
+            || !user.device
+            || !user.device.device_id
+            || user.device.device_id === device_id;
 
+        // Update last_verified_at
         if (sessionValid) {
             await db.ref(`users/${username}/session/last_verified_at`).set(Date.now());
         }
 
         const response = {
-            success: true, status: effectiveStatus, session_valid: sessionValid, 
-            device_valid: deviceValid, suspension_reason: user.suspension_reason || ''
+            success: true,
+            status: effectiveStatus,
+            session_valid: sessionValid,
+            device_valid: deviceValid,
+            suspension_reason: user.suspension_reason || ''
         };
         if (effectiveStatus !== 'ACTIVE' || !sessionValid) {
             response.session_id = null;
@@ -586,12 +676,19 @@ app.post('/api/session/validate', checkFirebase, async (req, res) => {
 });
 
 app.post('/api/device/heartbeat', checkFirebase, async (req, res) => {
-    const { username, session_id, device_id, online } = req.body;
+    const username = req.body.username || req.body.user;
+    const session_id = req.body.session_id || req.body.sessionId;
+    const device_id = req.body.device_id || req.body.deviceId;
+    const online = req.body.online;
+    
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid input" });
     try {
         const now = Date.now();
-        const isOnline = online !== false;
-        await db.ref(`users/${username}/device`).update({ last_seen: now, online: isOnline });
+        const isOnline = online !== false; // default true
+        await db.ref(`users/${username}/device`).update({
+            last_seen: now,
+            online: isOnline
+        });
         if (session_id) {
             await db.ref(`users/${username}/session/last_verified_at`).set(now);
         }
@@ -602,14 +699,20 @@ app.post('/api/device/heartbeat', checkFirebase, async (req, res) => {
 });
 
 app.post('/api/device/register', checkFirebase, async (req, res) => {
-    const { username, session_id, device } = req.body;
+    const username = req.body.username || req.body.user;
+    const session_id = req.body.session_id || req.body.sessionId;
+    const device = req.body.device || req.body.deviceInfo;
+    
     if (!isValidUsername(username) || !device) return res.status(400).json({ success: false, message: "Invalid input" });
     try {
         const existing = await getUser(username);
         const now = Date.now();
         const merged = {
-            ...(device || {}), session_id: session_id || (existing?.session?.session_id || ''), 
-            online: true, last_seen: now, first_seen: existing?.device?.first_seen || now
+            ...(device || {}),
+            session_id: session_id || (existing?.session?.session_id || ''),
+            online: true,
+            last_seen: now,
+            first_seen: existing?.device?.first_seen || now
         };
         await db.ref(`users/${username}/device`).update(merged);
         res.json({ success: true });
@@ -619,7 +722,9 @@ app.post('/api/device/register', checkFirebase, async (req, res) => {
 });
 
 app.get('/api/commands/pending', checkFirebase, async (req, res) => {
-    const { username, session_id } = req.query;
+    const username = req.query.username || req.query.user;
+    const session_id = req.query.session_id || req.query.sessionId;
+    
     if (!isValidUsername(username)) return res.status(400).json({ success: false, message: "Invalid input" });
     try {
         const snap = await db.ref(`users/${username}/commands`).orderByChild('delivered').equalTo(false).once('value');
@@ -645,7 +750,10 @@ app.get('/api/commands/pending', checkFirebase, async (req, res) => {
 async function pushCommand(username, type, payload) {
     try {
         await db.ref(`users/${username}/commands`).push({
-            type, payload: payload || '', timestamp: Date.now(), delivered: false
+            type,
+            payload: payload || '',
+            timestamp: Date.now(),
+            delivered: false
         });
     } catch (e) { console.error('[pushCommand]', e.message); }
 }
@@ -659,6 +767,7 @@ async function tryFcm(username, data) {
             await messaging.send({ token, data });
         }
     } catch (e) {
+        // FCM failure is non-fatal; polling channel will deliver
         console.warn('[tryFcm] failed (non-fatal):', e.message);
     }
 }
