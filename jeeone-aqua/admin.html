@@ -411,7 +411,17 @@ function prodForm(id){
     +FA('pf_ship','Shipping info',p.shippingInfo||'')
     +FA('pf_ret','Return policy',p.returnPolicy||'')
     +FA('pf_ref','Refund policy',p.refundPolicy||'')
-    +`<div class="mrow2" style="margin-top:12px">
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Trust Badges</div>`
+    +`<div class="mrow2">
+      <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Return badge</div></div><label class="switch"><input type="checkbox" id="pf_bReturn" ${(p.badges||{}).return!==false?'checked':''}><span class="slider"></span></label></div>
+      <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">COD badge</div></div><label class="switch"><input type="checkbox" id="pf_bCod" ${(p.badges||{}).cod!==false?'checked':''}><span class="slider"></span></label></div>
+    </div>`
+    +`<div class="mrow2">
+      <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Delivery badge</div></div><label class="switch"><input type="checkbox" id="pf_bDel" ${(p.badges||{}).delivery!==false?'checked':''}><span class="slider"></span></label></div>
+      <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Genuine badge</div></div><label class="switch"><input type="checkbox" id="pf_bGen" ${(p.badges||{}).genuine!==false?'checked':''}><span class="slider"></span></label></div>
+    </div>`
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Visibility</div>`
+    +`<div class="mrow2" style="margin-top:4px">
       <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Featured</div><div class="d">Show in featured section</div></div><label class="switch"><input type="checkbox" id="pf_feat" ${p.featured?'checked':''}><span class="slider"></span></label></div>
       <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Active</div><div class="d">Visible in store</div></div><label class="switch"><input type="checkbox" id="pf_act" ${p.active!==false?'checked':''}><span class="slider"></span></label></div>
     </div>`,
@@ -424,7 +434,8 @@ function prodForm(id){
         tags:gv('pf_tags').split(',').map(s=>s.trim()).filter(Boolean),
         weight:gv('pf_weight'),unit:gv('pf_unit')||'pc',warranty:gv('pf_warranty'),
         shippingInfo:gv('pf_ship'),returnPolicy:gv('pf_ret'),refundPolicy:gv('pf_ref'),
-        featured:$('pf_feat').checked,active:$('pf_act').checked};
+        featured:$('pf_feat').checked,active:$('pf_act').checked,
+        badges:{return:$('pf_bReturn').checked,cod:$('pf_bCod').checked,delivery:$('pf_bDel').checked,genuine:$('pf_bGen').checked}};
       const st=gv('pf_stock'), low=gv('pf_low');
       if(st!=='' ) body.stock=st;
       if(low!=='') body.lowAt=low;
@@ -649,6 +660,12 @@ async function rSettings(){
     ${F('set_ann','Announcement text','text',s.announcement||'','e.g. Free delivery on orders above ₹199')}
     <div class="toggle-row"><div><div class="t">Show announcement</div><div class="d">Display bar on storefront</div></div><label class="switch"><input type="checkbox" id="set_annOn" ${s.announcementActive?'checked':''}><span class="slider"></span></label></div>
   </div>
+  <div class="settings-card"><h3>${ICONS.star} Trust Badges (Global Default)</h3>
+    <div class="toggle-row"><div><div class="t">Return badge</div><div class="d">Show return policy badge</div></div><label class="switch"><input type="checkbox" id="set_bRet" ${s.badgeReturn!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">COD badge</div><div class="d">Show cash on delivery badge</div></div><label class="switch"><input type="checkbox" id="set_bCod" ${s.badgeCod!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">Delivery badge</div><div class="d">Show fast delivery badge</div></div><label class="switch"><input type="checkbox" id="set_bDel" ${s.badgeDelivery!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">Genuine badge</div><div class="d">Show 100% genuine badge</div></div><label class="switch"><input type="checkbox" id="set_bGen" ${s.badgeGenuine!==false?'checked':''}><span class="slider"></span></label></div>
+  </div>
   <div class="settings-card"><h3>${ICONS.refresh} Policies</h3>
     <div class="mrow2">${F('set_retd','Return window (days)','number',s.returnDays||7)}${F('set_refd','Refund window (days)','number',s.refundDays||7)}</div>
     ${FA('set_retp','Default return policy',s.defaultReturnPolicy||'')}
@@ -679,6 +696,7 @@ async function saveSettings(){
     supportPhone:gv('set_phone'),supportEmail:gv('set_email'),supportHours:gv('set_hours'),
     announcement:gv('set_ann'),announcementActive:$('set_annOn').checked,
     returnDays:+gv('set_retd'),refundDays:+gv('set_refd'),defaultReturnPolicy:gv('set_retp'),defaultRefundPolicy:gv('set_refp'),
+    badgeReturn:$('set_bRet').checked,badgeCod:$('set_bCod').checked,badgeDelivery:$('set_bDel').checked,badgeGenuine:$('set_bGen').checked,
     whatsappEnabled:$('set_wa').checked,smsEnabled:$('set_sms').checked,emailEnabled:$('set_em').checked,
     lowStockAlert:$('set_low').checked,newOrderAlert:$('set_new').checked,
     seoTitle:gv('set_seot'),seoDesc:gv('set_seod'),maintenanceMode:$('set_maint').checked};

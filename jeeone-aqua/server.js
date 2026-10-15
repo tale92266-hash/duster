@@ -141,6 +141,7 @@ const server = http.createServer(async (req, res) => {
         returnPolicy: body.returnPolicy || '', refundPolicy: body.refundPolicy || '',
         shippingInfo: body.shippingInfo || '', warranty: body.warranty || '',
         featured: !!body.featured, active: body.active !== false,
+        badges: body.badges || { return: true, cod: true, delivery: true, genuine: true },
         createdAt: new Date().toISOString(),
         ...body,
         id: body.id || uid('p'),
@@ -197,6 +198,18 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/orders' && m === 'POST') {
       const body = await readBody(req);
       const orders = readJson('orders', []);
+      // Auto-decrease stock for ordered items
+      if (body.items && body.items.length) {
+        const inv = readJson('inventory', []);
+        let invChanged = false;
+        body.items.forEach(it => {
+          const pid = it.productId || it.id;
+          const qty = +(it.qty || it.quantity || 1);
+          const idx = inv.findIndex(x => x.productId === pid);
+          if (idx >= 0) { inv[idx].stock = Math.max(0, inv[idx].stock - qty); inv[idx].updatedAt = new Date().toISOString(); invChanged = true; }
+        });
+        if (invChanged) writeJson('inventory', inv);
+      }
       const order = {
         id: 'JEA-' + Math.floor(100000 + Math.random() * 900000),
         items: body.items || [],
@@ -528,6 +541,7 @@ const server = http.createServer(async (req, res) => {
       currency: 'INR', taxPercent: 0,
       brandColor: '#1E5A3C', accentColor: '#C9A227',
       announcement: '', announcementActive: false,
+      badgeReturn: true, badgeCod: true, badgeDelivery: true, badgeGenuine: true,
       whatsappEnabled: true, smsEnabled: false, emailEnabled: true,
       lowStockAlert: true, newOrderAlert: true,
       returnDays: 7, refundDays: 7,
