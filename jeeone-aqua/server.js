@@ -130,8 +130,29 @@ const server = http.createServer(async (req, res) => {
       if (!requireAdmin(req, res)) return;
       const body = await readBody(req);
       const products = readJson('products', []);
-      const np = { id: body.id || uid('p'), ...body };
+      const np = {
+        id: body.id || uid('p'),
+        name: body.name || '', desc: body.desc || '',
+        price: +body.price || 0, mrp: +body.mrp || +body.price || 0,
+        category: body.category || '', badge: body.badge || '',
+        img: body.img || '', images: body.images || (body.img ? [body.img] : []),
+        sku: body.sku || '', tags: body.tags || [],
+        weight: body.weight || '', unit: body.unit || 'pc',
+        returnPolicy: body.returnPolicy || '', refundPolicy: body.refundPolicy || '',
+        shippingInfo: body.shippingInfo || '', warranty: body.warranty || '',
+        featured: !!body.featured, active: body.active !== false,
+        createdAt: new Date().toISOString(),
+        ...body,
+        id: body.id || uid('p'),
+      };
+      // dedupe id after spread
       products.push(np); writeJson('products', products);
+      // auto-create inventory if stock given
+      if (body.stock !== undefined && body.stock !== '') {
+        const inv = readJson('inventory', []);
+        inv.push({ productId: np.id, stock: +body.stock || 0, lowAt: +body.lowAt || 10, updatedAt: new Date().toISOString() });
+        writeJson('inventory', inv);
+      }
       return ok(res, np);
     }
     if (prodMatch && m === 'PUT') {
@@ -140,8 +161,22 @@ const server = http.createServer(async (req, res) => {
       const products = readJson('products', []);
       const i = products.findIndex(x => x.id === prodMatch[1]);
       if (i < 0) return fail(res, 404, 'Product not found');
-      products[i] = { ...products[i], ...body, id: prodMatch[1] };
+      const upd = { ...body };
+      if (upd.price !== undefined) upd.price = +upd.price;
+      if (upd.mrp !== undefined) upd.mrp = +upd.mrp;
+      if (typeof upd.featured !== 'undefined') upd.featured = !!upd.featured;
+      if (typeof upd.active !== 'undefined') upd.active = !!upd.active;
+      if (upd.img && !upd.images) upd.images = [upd.img];
+      products[i] = { ...products[i], ...upd, id: prodMatch[1], updatedAt: new Date().toISOString() };
       writeJson('products', products);
+      // sync stock if provided
+      if (body.stock !== undefined && body.stock !== '') {
+        const inv = readJson('inventory', []);
+        const ii = inv.findIndex(x => x.productId === prodMatch[1]);
+        const item = { productId: prodMatch[1], stock: +body.stock || 0, lowAt: body.lowAt !== undefined ? +body.lowAt : (ii >= 0 ? inv[ii].lowAt : 10), updatedAt: new Date().toISOString() };
+        if (ii >= 0) inv[ii] = item; else inv.push(item);
+        writeJson('inventory', inv);
+      }
       return ok(res, products[i]);
     }
     if (prodMatch && m === 'DELETE') {
@@ -485,8 +520,21 @@ const server = http.createServer(async (req, res) => {
     // ----- Settings -----
     if (p === '/api/settings' && m === 'GET') return ok(res, readJson('settings', {
       deliveryFee: 0, minOrder: 0, freeAbove: 199,
-      storeName: 'JeeOne Aqua', supportPhone: '+91 97177 69977',
-      supportEmail: 'jeeoneaqua@gmail.com', codEnabled: true, onlineEnabled: true
+      storeName: 'JeeOne Aqua', tagline: 'Pure Water, Delivered Fresh',
+      supportPhone: '+91 97177 69977', supportEmail: 'jeeoneaqua@gmail.com',
+      supportHours: 'Mon–Sat, 9 AM – 8 PM',
+      address: '', city: '', pincode: '',
+      codEnabled: true, onlineEnabled: true,
+      currency: 'INR', taxPercent: 0,
+      brandColor: '#1E5A3C', accentColor: '#C9A227',
+      announcement: '', announcementActive: false,
+      whatsappEnabled: true, smsEnabled: false, emailEnabled: true,
+      lowStockAlert: true, newOrderAlert: true,
+      returnDays: 7, refundDays: 7,
+      defaultReturnPolicy: '7-day easy return on unopened products.',
+      defaultRefundPolicy: 'Refund processed within 5-7 business days to source account.',
+      seoTitle: '', seoDesc: '',
+      maintenanceMode: false
     }));
     if (p === '/api/settings' && m === 'PUT') {
       if (!requireAdmin(req, res)) return;

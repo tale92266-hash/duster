@@ -391,11 +391,68 @@ function filterRows(tbodyId,q){
 }
 function prodForm(id){
   const p=id?(window._prods||[]).find(x=>x.id===id):{};
-  openModal(id?'Edit Product':'Add Product', id?'Update product details':'Add a new product to your catalogue',
-    F('pf_name','Product name','text',p.name||'','e.g. 1 Litre Bottle')+`<div class="mrow2">${F('pf_price','Price (₹)','number',p.price||'','20')}${F('pf_cat','Category','text',p.category||'','Bottles')}</div>`+FA('pf_desc','Description',p.desc||'')+`<div class="mrow2">${F('pf_badge','Badge','text',p.badge||'','NEW')}${F('pf_img','Image URL','text',p.img||'')}</div>`,
-    async()=>{const body={name:gv('pf_name'),price:+gv('pf_price'),category:gv('pf_cat'),desc:gv('pf_desc'),badge:gv('pf_badge'),img:gv('pf_img')};
-      if(!body.name||!body.price)return toast('Name and price are required','error');
-      await api(id?'/products/'+id:'/products',id?'PUT':'POST',body);closeModal();toast(id?'Product updated':'Product added','success');rProducts();});
+  const imgs=(p.images||[]).join('\n');
+  openModal(id?'Edit Product':'Add Product', id?'Update product details':'Complete product information',
+    `<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:4px 0 2px">Basic Info</div>`
+    +F('pf_name','Product name *','text',p.name||'','e.g. 1 Litre Mineral Water Bottle')
+    +FA('pf_desc','Description',p.desc||'')
+    +`<div class="mrow2">${F('pf_cat','Category','text',p.category||'','Bottles')}${F('pf_sku','SKU','text',p.sku||'','JEA-1L-001')}</div>`
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Pricing</div>`
+    +`<div class="mrow2">${F('pf_mrp','MRP / Original price (₹)','number',p.mrp||p.price||'','25')}${F('pf_price','Our price / Selling price (₹) *','number',p.price||'','20')}</div>`
+    +`<div class="mrow2">${F('pf_stock','Stock quantity','number',p._stock!==undefined?p._stock:'','100')}${F('pf_low','Low-stock alert at','number','','10')}</div>`
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Media</div>`
+    +F('pf_img','Main image URL','text',p.img||'','https://...')
+    +FA('pf_images','More images (one URL per line)',imgs)
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Details</div>`
+    +`<div class="mrow2">${F('pf_badge','Badge','text',p.badge||'','NEW / BESTSELLER')}${F('pf_tags','Tags (comma separated)','text',(p.tags||[]).join(', '),'bestseller, family')}</div>`
+    +`<div class="mrow2">${F('pf_weight','Weight','text',p.weight||'','1 kg')}${F('pf_unit','Unit','text',p.unit||'pc','pc / litre')}</div>`
+    +F('pf_warranty','Warranty / Guarantee','text',p.warranty||'','')
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Policies</div>`
+    +FA('pf_ship','Shipping info',p.shippingInfo||'')
+    +FA('pf_ret','Return policy',p.returnPolicy||'')
+    +FA('pf_ref','Refund policy',p.refundPolicy||'')
+    +`<div class="mrow2" style="margin-top:12px">
+      <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Featured</div><div class="d">Show in featured section</div></div><label class="switch"><input type="checkbox" id="pf_feat" ${p.featured?'checked':''}><span class="slider"></span></label></div>
+      <div class="toggle-row" style="border:none;padding:6px 0"><div><div class="t">Active</div><div class="d">Visible in store</div></div><label class="switch"><input type="checkbox" id="pf_act" ${p.active!==false?'checked':''}><span class="slider"></span></label></div>
+    </div>`,
+    async()=>{
+      const imgList=gv('pf_images').split('\n').map(s=>s.trim()).filter(Boolean);
+      const mainImg=gv('pf_img')||imgList[0]||'';
+      const body={name:gv('pf_name'),desc:gv('pf_desc'),category:gv('pf_cat'),sku:gv('pf_sku'),
+        mrp:+gv('pf_mrp')||+gv('pf_price'),price:+gv('pf_price'),
+        badge:gv('pf_badge'),img:mainImg,images:imgList.length?imgList:(mainImg?[mainImg]:[]),
+        tags:gv('pf_tags').split(',').map(s=>s.trim()).filter(Boolean),
+        weight:gv('pf_weight'),unit:gv('pf_unit')||'pc',warranty:gv('pf_warranty'),
+        shippingInfo:gv('pf_ship'),returnPolicy:gv('pf_ret'),refundPolicy:gv('pf_ref'),
+        featured:$('pf_feat').checked,active:$('pf_act').checked};
+      const st=gv('pf_stock'), low=gv('pf_low');
+      if(st!=='' ) body.stock=st;
+      if(low!=='') body.lowAt=low;
+      if(!body.name||!body.price)return toast('Name and selling price are required','error');
+      await api(id?'/products/'+id:'/products',id?'PUT':'POST',body);
+      closeModal();toast(id?'Product updated':'Product added','success');rProducts();});
+}
+// preload stock into product objects for edit
+async function rProducts(){
+  const pg=$('page');
+  pg.innerHTML=pageHead('Products','Manage your catalogue',
+    `<div class="search-box">${ICONS.search}<input id="pq" placeholder="Search products..." oninput="filterRows('prodRows',this.value)"></div><button class="btn btn-primary" onclick="prodForm()">${ICONS.plus} Add Product</button>`)+skeletonRows();
+  const [pj,ij]=await Promise.all([api('/products'),api('/inventory').catch(()=>({data:[]}))]);
+  const ps=pj.data||[], inv=ij.data||[];
+  ps.forEach(p=>{const it=inv.find(x=>x.productId===p.id); if(it) p._stock=it.stock;});
+  window._prods=ps;
+  pg.innerHTML=pageHead('Products',`${ps.length} products in catalogue`,
+    `<div class="search-box">${ICONS.search}<input id="pq" placeholder="Search products..." oninput="filterRows('prodRows',this.value)"></div><button class="btn btn-primary" onclick="prodForm()">${ICONS.plus} Add Product</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Product</th><th>Pricing</th><th>Stock</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+  <tbody id="prodRows">${ps.map(p=>{
+    const it=inv.find(x=>x.productId===p.id); const st=it?it.stock:'—'; const disc=p.mrp>p.price?Math.round((1-p.price/p.mrp)*100):0;
+    return `<tr data-s="${(p.name+' '+p.id+' '+(p.sku||'')).toLowerCase()}">
+    <td><div style="display:flex;align-items:center"><div class="avatar-sm">${(p.name||'?')[0].toUpperCase()}</div><div><div class="cell-main">${p.name}</div><div class="cell-sub">${p.sku||p.id}${p.badge?` · <span class="chip">${p.badge}</span>`:''}${p.featured?' · <span class="chip">Featured</span>':''}</div></div></div></td>
+    <td><span class="price">₹${(+p.price||0).toLocaleString('en-IN')}</span>${p.mrp>p.price?`<br><span class="cell-sub"><s>₹${(+p.mrp).toLocaleString('en-IN')}</s> <span style="color:var(--success);font-weight:700">${disc}% off</span></span>`:''}</td>
+    <td>${st==='—'?'<span class="cell-sub">—</span>':`<b>${st}</b>`}</td>
+    <td>${p.active!==false?'<span class="badge b-green"><span class="dot"></span>Live</span>':'<span class="badge b-grey"><span class="dot"></span>Hidden</span>'}</td>
+    <td style="text-align:right;white-space:nowrap"><button class="btn btn-blue-soft btn-sm" onclick="prodForm('${p.id}')">Edit</button> <button class="btn btn-danger-soft btn-sm" onclick="delProd('${p.id}')">Delete</button></td></tr>`;}).join('')||''}</tbody></table>
+    ${ps.length?'':'<div class="empty">'+ICONS.inbox+'<p>No products yet. Add your first product.</p></div>'}</div></div>`;
 }
 async function delProd(id){if(!confirm('Delete this product?'))return;await api('/products/'+id,'DELETE');toast('Product deleted','success');rProducts();}
 
@@ -572,24 +629,60 @@ async function rSettings(){
   const pg=$('page'); pg.innerHTML=pageHead('Settings','Store configuration')+skeletonRows(2);
   const j=await api('/settings'); const s=j.data||{};
   pg.innerHTML=pageHead('Settings','Store configuration')+`
-  <div class="settings-card"><h3>${ICONS.box} Store</h3>
-    ${F('set_name','Store name','text',s.storeName||'')}
+  <div class="settings-card"><h3>${ICONS.box} Store Identity</h3>
+    <div class="mrow2">${F('set_name','Store name','text',s.storeName||'JeeOne Aqua')}${F('set_tagline','Tagline','text',s.tagline||'','Pure Water, Delivered Fresh')}</div>
+    <div class="mrow2">${F('set_brand','Brand color','text',s.brandColor||'#1E5A3C')}${F('set_accent','Accent color','text',s.accentColor||'#C9A227')}</div>
+    ${F('set_addr','Street address','text',s.address||'')}
+    <div class="mrow2">${F('set_city','City','text',s.city||'')}${F('set_pin','Pincode','text',s.pincode||'')}</div>
+  </div>
+  <div class="settings-card"><h3>${ICONS.cart} Delivery & Pricing</h3>
     <div class="mrow2">${F('set_fee','Delivery fee (₹)','number',s.deliveryFee||0)}${F('set_min','Minimum order (₹)','number',s.minOrder||0)}</div>
-    ${F('set_free','Free delivery above (₹)','number',s.freeAbove||199)}
-  </div>
-  <div class="settings-card"><h3>${ICONS.chat} Support</h3>
-    ${F('set_phone','Support phone','text',s.supportPhone||'')}
-    ${F('set_email','Support email','text',s.supportEmail||'')}
-  </div>
-  <div class="settings-card"><h3>${ICONS.cart} Payments</h3>
-    <div class="toggle-row"><div><div class="t">Cash on Delivery</div><div class="d">Accept cash payments</div></div><label class="switch"><input type="checkbox" id="set_cod" ${s.codEnabled!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="mrow2">${F('set_free','Free delivery above (₹)','number',s.freeAbove||199)}${F('set_tax','Tax %','number',s.taxPercent||0)}</div>
+    <div class="toggle-row"><div><div class="t">Cash on Delivery</div><div class="d">Accept cash on delivery</div></div><label class="switch"><input type="checkbox" id="set_cod" ${s.codEnabled!==false?'checked':''}><span class="slider"></span></label></div>
     <div class="toggle-row"><div><div class="t">Online Payment</div><div class="d">UPI, cards & netbanking</div></div><label class="switch"><input type="checkbox" id="set_online" ${s.onlineEnabled!==false?'checked':''}><span class="slider"></span></label></div>
   </div>
-  <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px" onclick="saveSettings()">Save Settings</button>`;
+  <div class="settings-card"><h3>${ICONS.chat} Support</h3>
+    <div class="mrow2">${F('set_phone','Support phone','text',s.supportPhone||'')}${F('set_email','Support email','text',s.supportEmail||'')}</div>
+    ${F('set_hours','Support hours','text',s.supportHours||'Mon–Sat, 9 AM – 8 PM')}
+  </div>
+  <div class="settings-card"><h3>${ICONS.image} Announcement Bar</h3>
+    ${F('set_ann','Announcement text','text',s.announcement||'','e.g. Free delivery on orders above ₹199')}
+    <div class="toggle-row"><div><div class="t">Show announcement</div><div class="d">Display bar on storefront</div></div><label class="switch"><input type="checkbox" id="set_annOn" ${s.announcementActive?'checked':''}><span class="slider"></span></label></div>
+  </div>
+  <div class="settings-card"><h3>${ICONS.refresh} Policies</h3>
+    <div class="mrow2">${F('set_retd','Return window (days)','number',s.returnDays||7)}${F('set_refd','Refund window (days)','number',s.refundDays||7)}</div>
+    ${FA('set_retp','Default return policy',s.defaultReturnPolicy||'')}
+    ${FA('set_refp','Default refund policy',s.defaultRefundPolicy||'')}
+  </div>
+  <div class="settings-card"><h3>${ICONS.star} Notifications</h3>
+    <div class="toggle-row"><div><div class="t">WhatsApp alerts</div><div class="d">Order updates via WhatsApp</div></div><label class="switch"><input type="checkbox" id="set_wa" ${s.whatsappEnabled!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">SMS alerts</div><div class="d">Order updates via SMS</div></div><label class="switch"><input type="checkbox" id="set_sms" ${s.smsEnabled?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">Email alerts</div><div class="d">Order updates via email</div></div><label class="switch"><input type="checkbox" id="set_em" ${s.emailEnabled!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">Low stock alerts</div><div class="d">Notify when stock runs low</div></div><label class="switch"><input type="checkbox" id="set_low" ${s.lowStockAlert!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">New order alerts</div><div class="d">Notify on every new order</div></div><label class="switch"><input type="checkbox" id="set_new" ${s.newOrderAlert!==false?'checked':''}><span class="slider"></span></label></div>
+  </div>
+  <div class="settings-card"><h3>${ICONS.trend} SEO</h3>
+    ${F('set_seot','SEO title','text',s.seoTitle||'')}
+    ${FA('set_seod','SEO description',s.seoDesc||'')}
+  </div>
+  <div class="settings-card" style="border-color:#fecdc2"><h3 style="color:var(--red)">${ICONS.gear} Danger Zone</h3>
+    <div class="toggle-row"><div><div class="t">Maintenance mode</div><div class="d">Take store offline temporarily</div></div><label class="switch"><input type="checkbox" id="set_maint" ${s.maintenanceMode?'checked':''}><span class="slider"></span></label></div>
+  </div>
+  <button class="btn btn-primary" style="width:100%;justify-content:center;padding:15px;font-size:15px;position:sticky;bottom:80px" onclick="saveSettings()">Save All Settings</button>
+  <div style="height:10px"></div>`;
 }
 async function saveSettings(){
-  const body={storeName:gv('set_name'),deliveryFee:+gv('set_fee'),minOrder:+gv('set_min'),freeAbove:+gv('set_free'),supportPhone:gv('set_phone'),supportEmail:gv('set_email'),codEnabled:$('set_cod').checked,onlineEnabled:$('set_online').checked};
-  await api('/settings','PUT',body); toast('Settings saved','success');
+  const body={storeName:gv('set_name'),tagline:gv('set_tagline'),brandColor:gv('set_brand'),accentColor:gv('set_accent'),
+    address:gv('set_addr'),city:gv('set_city'),pincode:gv('set_pin'),
+    deliveryFee:+gv('set_fee'),minOrder:+gv('set_min'),freeAbove:+gv('set_free'),taxPercent:+gv('set_tax'),
+    codEnabled:$('set_cod').checked,onlineEnabled:$('set_online').checked,
+    supportPhone:gv('set_phone'),supportEmail:gv('set_email'),supportHours:gv('set_hours'),
+    announcement:gv('set_ann'),announcementActive:$('set_annOn').checked,
+    returnDays:+gv('set_retd'),refundDays:+gv('set_refd'),defaultReturnPolicy:gv('set_retp'),defaultRefundPolicy:gv('set_refp'),
+    whatsappEnabled:$('set_wa').checked,smsEnabled:$('set_sms').checked,emailEnabled:$('set_em').checked,
+    lowStockAlert:$('set_low').checked,newOrderAlert:$('set_new').checked,
+    seoTitle:gv('set_seot'),seoDesc:gv('set_seod'),maintenanceMode:$('set_maint').checked};
+  await api('/settings','PUT',body); toast('All settings saved','success');
 }
 
 const RENDER={dash:rDash,products:rProducts,orders:rOrders,subs:rSubs,slots:rSlots,boys:rBoys,inventory:rInv,cats:rCats,banners:rBanners,customers:rCust,coupons:rCoupons,reviews:rReviews,feedback:rFeedback,reports:rReports,settings:rSettings};
