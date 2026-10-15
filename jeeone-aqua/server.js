@@ -96,6 +96,18 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
+    // ----- Admin panel -----
+    if ((p === '/admin' || p === '/admin.html') && m === 'GET') {
+      const fs = require('fs');
+      const path = require('path');
+      const fp = path.join(__dirname, 'admin.html');
+      if (fs.existsSync(fp)) {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        return res.end(fs.readFileSync(fp));
+      }
+      return fail(res, 404, 'Admin panel not found');
+    }
+
     // ----- Health & config -----
     if (p === '/api/health' && m === 'GET') {
       return ok(res, { status: 'up', time: new Date().toISOString() });

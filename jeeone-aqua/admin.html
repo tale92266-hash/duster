@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JeeOne Aqua — Admin Panel</title>
+<style>
+:root{--green:#1E5A3C;--dark:#123C28;--gold:#C9A227;--ivory:#F5F1E6;--white:#fff;--grey:#6b7280;--red:#dc2626}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:var(--ivory);color:#1f2937;min-height:100vh}
+/* Login */
+#login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--dark),var(--green))}
+.login-card{background:var(--white);padding:40px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:360px;max-width:90vw}
+.login-card h1{color:var(--green);text-align:center;margin-bottom:5px;font-size:24px}
+.login-card p{text-align:center;color:var(--grey);margin-bottom:25px;font-size:14px}
+.login-card input{width:100%;padding:12px 15px;margin-bottom:15px;border:2px solid #e5e7eb;border-radius:8px;font-size:15px;outline:none}
+.login-card input:focus{border-color:var(--green)}
+.login-card button{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
+.login-card button:hover{background:var(--dark)}
+#loginErr{color:var(--red);text-align:center;margin-top:10px;font-size:14px;display:none}
+/* Layout */
+#app{display:none}
+header{background:var(--dark);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+header .brand{font-size:20px;font-weight:700;color:var(--gold)}
+header .brand span{color:#fff;font-weight:400;font-size:14px;margin-left:8px}
+header button{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:7px 16px;border-radius:6px;cursor:pointer;font-size:14px}
+header button:hover{background:var(--gold);color:var(--dark)}
+.container{display:flex;min-height:calc(100vh - 60px)}
+nav{width:210px;background:var(--white);border-right:1px solid #e5e7eb;padding:15px 0;position:sticky;top:60px;height:calc(100vh - 60px)}
+nav button{display:block;width:100%;text-align:left;padding:13px 22px;border:none;background:none;font-size:15px;cursor:pointer;color:#374151;border-left:3px solid transparent}
+nav button:hover{background:#f3f4f6}
+nav button.active{background:#ecfdf5;color:var(--green);font-weight:600;border-left-color:var(--green)}
+main{flex:1;padding:25px;max-width:1100px}
+h2{color:var(--dark);margin-bottom:20px;font-size:22px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px}
+.card{background:var(--white);border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.card .num{font-size:32px;font-weight:700;color:var(--green)}
+.card .lbl{color:var(--grey);font-size:13px;margin-top:5px}
+table{width:100%;background:var(--white);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);border-collapse:collapse}
+th{background:var(--green);color:#fff;padding:12px 15px;text-align:left;font-size:13px;font-weight:600}
+td{padding:12px 15px;border-bottom:1px solid #f3f4f6;font-size:14px}
+tr:last-child td{border:none}
+.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600}
+.btn-add{background:var(--green);color:#fff;padding:10px 20px;margin-bottom:15px;font-size:14px}
+.btn-edit{background:#dbeafe;color:#1d4ed8}
+.btn-del{background:#fee2e2;color:var(--red)}
+.btn:hover{opacity:.85}
+.status{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.st-Confirmed{background:#dbeafe;color:#1d4ed8}.st-Packed{background:#fef3c7;color:#92400e}
+.st-Shipped{background:#e0e7ff;color:#3730a3}.st-Delivered{background:#d1fae5;color:#065f46}
+.st-Cancelled{background:#fee2e2;color:#991b1b}
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:30px;width:440px;max-width:92vw;max-height:90vh;overflow-y:auto}
+.modal-box h3{color:var(--dark);margin-bottom:20px}
+.modal-box label{display:block;font-size:13px;font-weight:600;color:#374151;margin:12px 0 5px}
+.modal-box input,.modal-box select,.modal-box textarea{width:100%;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none}
+.modal-box input:focus,.modal-box select:focus{border-color:var(--green)}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.modal-btns button{flex:1;padding:11px;border-radius:8px;border:none;font-weight:600;cursor:pointer;font-size:14px}
+.btn-save{background:var(--green);color:#fff}
+.btn-cancel{background:#f3f4f6;color:#374151}
+.tab{display:none}.tab.active{display:block}
+select.stsel{padding:5px 10px;border-radius:6px;border:1px solid #d1d5db;font-size:13px}
+@media(max-width:768px){nav{width:60px}nav button span{display:none}nav button{padding:13px;text-align:center}.container{flex-direction:row}main{padding:15px}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-card">
+    <h1>💧 JeeOne Aqua</h1>
+    <p>Admin Panel</p>
+    <input type="text" id="u" placeholder="Username" autocomplete="off">
+    <input type="password" id="p" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Login</button>
+    <div id="loginErr">Invalid username or password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+<header>
+  <div class="brand">💧 JeeOne Aqua <span>Admin Panel</span></div>
+  <button onclick="logout()">Logout</button>
+</header>
+<div class="container">
+<nav>
+  <button class="active" onclick="showTab('dash',this)"><span>📊</span> <span>Dashboard</span></button>
+  <button onclick="showTab('products',this)"><span>📦</span> <span>Products</span></button>
+  <button onclick="showTab('orders',this)"><span>🛒</span> <span>Orders</span></button>
+  <button onclick="showTab('coupons',this)"><span>🎟️</span> <span>Coupons</span></button>
+  <button onclick="showTab('reviews',this)"><span>⭐</span> <span>Reviews</span></button>
+  <button onclick="showTab('feedback',this)"><span>💬</span> <span>Feedback</span></button>
+</nav>
+<main>
+  <!-- Dashboard -->
+  <div id="tab-dash" class="tab active">
+    <h2>Dashboard</h2>
+    <div class="cards">
+      <div class="card"><div class="num" id="cProd">-</div><div class="lbl">Products</div></div>
+      <div class="card"><div class="num" id="cOrd">-</div><div class="lbl">Total Orders</div></div>
+      <div class="card"><div class="num" id="cRev">₹-</div><div class="lbl">Revenue</div></div>
+      <div class="card"><div class="num" id="cCoup">-</div><div class="lbl">Coupons</div></div>
+    </div>
+    <h2>Recent Orders</h2>
+    <table><thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody id="recentOrders"></tbody></table>
+  </div>
+  <!-- Products -->
+  <div id="tab-products" class="tab">
+    <h2>Products</h2>
+    <button class="btn btn-add" onclick="openProdModal()">+ Add Product</button>
+    <table><thead><tr><th>ID</th><th>Name</th><th>Price</th><th>Category</th><th>Actions</th></tr></thead><tbody id="prodList"></tbody></table>
+  </div>
+  <!-- Orders -->
+  <div id="tab-orders" class="tab">
+    <h2>Orders</h2>
+    <table><thead><tr><th>Order ID</th><th>Customer</th><th>Phone</th><th>Total</th><th>Status</th><th>Action</th></tr></thead><tbody id="orderList"></tbody></table>
+  </div>
+  <!-- Coupons -->
+  <div id="tab-coupons" class="tab">
+    <h2>Coupons</h2>
+    <button class="btn btn-add" onclick="openCouponModal()">+ Add Coupon</button>
+    <table><thead><tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Active</th></tr></thead><tbody id="couponList"></tbody></table>
+  </div>
+  <!-- Reviews -->
+  <div id="tab-reviews" class="tab">
+    <h2>Reviews</h2>
+    <table><thead><tr><th>Product</th><th>Rating</th><th>Title</th><th>Review</th></tr></thead><tbody id="reviewList"></tbody></table>
+  </div>
+  <!-- Feedback -->
+  <div id="tab-feedback" class="tab">
+    <h2>Feedback</h2>
+    <table><thead><tr><th>Name</th><th>Message</th><th>Date</th></tr></thead><tbody id="fbList"></tbody></table>
+  </div>
+</main>
+</div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal" id="prodModal"><div class="modal-box">
+  <h3 id="prodModalTitle">Add Product</h3>
+  <input type="hidden" id="f_id">
+  <label>Name</label><input id="f_name" placeholder="e.g. 1 Litre Bottle">
+  <label>Price (₹)</label><input id="f_price" type="number" placeholder="20">
+  <label>Category</label><input id="f_cat" placeholder="Bottles">
+  <label>Description</label><textarea id="f_desc" rows="2"></textarea>
+  <label>Badge (optional)</label><input id="f_badge" placeholder="NEW / BESTSELLER">
+  <label>Image URL</label><input id="f_img" placeholder="image path or URL">
+  <div class="modal-btns"><button class="btn-save" onclick="saveProduct()">Save</button><button class="btn-cancel" onclick="closeModal('prodModal')">Cancel</button></div>
+</div></div>
+
+<!-- Coupon Modal -->
+<div class="modal" id="couponModal"><div class="modal-box">
+  <h3>Add Coupon</h3>
+  <label>Code</label><input id="c_code" placeholder="WELCOME10">
+  <label>Discount %</label><input id="c_disc" type="number" placeholder="10">
+  <label>Min Order ₹</label><input id="c_min" type="number" placeholder="100">
+  <div class="modal-btns"><button class="btn-save" onclick="saveCoupon()">Save</button><button class="btn-cancel" onclick="closeModal('couponModal')">Cancel</button></div>
+</div></div>
+
+<script>
+const API = location.pathname.includes('/jeeone') ? '/jeeone/api' : '/api';
+let TOKEN = localStorage.getItem('jeeone_admin_token') || '';
+
+const headers = () => ({'Content-Type':'application/json','Authorization':'Bearer '+TOKEN});
+async function api(path, method='GET', body) {
+  const r = await fetch(API+path, {method, headers:headers(), body:body?JSON.stringify(body):undefined});
+  const j = await r.json();
+  if (!j.ok && j.error==='Auth required') { logout(); throw new Error('auth'); }
+  return j;
+}
+
+// Login
+async function doLogin() {
+  const u=document.getElementById('u').value, p=document.getElementById('p').value;
+  try {
+    const j = await api('/admin/login','POST',{username:u,password:p});
+    if (j.ok) { TOKEN=j.data.token; localStorage.setItem('jeeone_admin_token',TOKEN); init(); }
+    else document.getElementById('loginErr').style.display='block';
+  } catch(e){ document.getElementById('loginErr').style.display='block'; }
+}
+function logout(){ localStorage.removeItem('jeeone_admin_token'); TOKEN=''; location.reload(); }
+
+// Tabs
+function showTab(name, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(name==='products') loadProducts();
+  if(name==='orders') loadOrders();
+  if(name==='coupons') loadCoupons();
+  if(name==='reviews') loadReviews();
+  if(name==='feedback') loadFeedback();
+}
+
+// Dashboard
+async function init(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  try {
+    const [pr, or, cp] = await Promise.all([api('/products'), api('/orders'), api('/coupons')]);
+    const prods=pr.data||[], orders=or.data||[], coups=cp.data||[];
+    document.getElementById('cProd').textContent=prods.length;
+    document.getElementById('cOrd').textContent=orders.length;
+    document.getElementById('cRev').textContent='₹'+orders.reduce((s,o)=>s+(o.total||0),0).toLocaleString('en-IN');
+    document.getElementById('cCoup').textContent=coups.length;
+    document.getElementById('recentOrders').innerHTML = orders.slice(-5).reverse().map(o=>
+      `<tr><td>${o.id}</td><td>${o.name||'-'}</td><td>₹${o.total||0}</td><td><span class="status st-${o.status}">${o.status}</span></td></tr>`).join('') || '<tr><td colspan=4>No orders yet</td></tr>';
+  } catch(e){}
+}
+
+// Products
+async function loadProducts(){
+  const j = await api('/products'); const prods=j.data||[];
+  document.getElementById('prodList').innerHTML = prods.map(p=>
+    `<tr><td>${p.id}</td><td>${p.name}</td><td>₹${p.price}</td><td>${p.category||'-'}</td>
+    <td><button class="btn btn-edit" onclick='editProd(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+    <button class="btn btn-del" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('');
+}
+function openProdModal(){ document.getElementById('prodModalTitle').textContent='Add Product';
+  ['f_id','f_name','f_price','f_cat','f_desc','f_badge','f_img'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('prodModal').classList.add('show'); }
+function editProd(p){ document.getElementById('prodModalTitle').textContent='Edit Product';
+  document.getElementById('f_id').value=p.id; document.getElementById('f_name').value=p.name||'';
+  document.getElementById('f_price').value=p.price||''; document.getElementById('f_cat').value=p.category||'';
+  document.getElementById('f_desc').value=p.desc||''; document.getElementById('f_badge').value=p.badge||'';
+  document.getElementById('f_img').value=p.img||'';
+  document.getElementById('prodModal').classList.add('show'); }
+async function saveProduct(){
+  const id=document.getElementById('f_id').value;
+  const body={name:document.getElementById('f_name').value, price:+document.getElementById('f_price').value,
+    category:document.getElementById('f_cat').value, desc:document.getElementById('f_desc').value,
+    badge:document.getElementById('f_badge').value, img:document.getElementById('f_img').value};
+  if(!body.name||!body.price){alert('Name and price required');return;}
+  await api(id?'/products/'+id:'/products', id?'PUT':'POST', body);
+  closeModal('prodModal'); loadProducts();
+}
+async function delProd(id){ if(confirm('Delete this product?')){ await api('/products/'+id,'DELETE'); loadProducts(); } }
+
+// Orders
+const STATUSES=['Confirmed','Packed','Shipped','Delivered','Cancelled'];
+async function loadOrders(){
+  const j=await api('/orders'); const orders=(j.data||[]).reverse();
+  document.getElementById('orderList').innerHTML=orders.map(o=>
+    `<tr><td>${o.id}</td><td>${o.name||'-'}</td><td>${o.phone||'-'}</td><td>₹${o.total||0}</td>
+    <td><span class="status st-${o.status}">${o.status}</span></td>
+    <td><select class="stsel" onchange="setStatus('${o.id}',this.value)">
+    ${STATUSES.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')
+    || '<tr><td colspan=6>No orders yet</td></tr>';
+}
+async function setStatus(id,st){ await api('/orders/'+id+'/status','PATCH',{status:st}); loadOrders(); }
+
+// Coupons
+async function loadCoupons(){
+  const j=await api('/coupons'); const cps=j.data||[];
+  document.getElementById('couponList').innerHTML=cps.map(c=>
+    `<tr><td><b>${c.code}</b></td><td>${c.discount}%</td><td>₹${c.minOrder||0}</td><td>${c.active!==false?'✅':'❌'}</td></tr>`).join('')
+    || '<tr><td colspan=4>No coupons</td></tr>';
+}
+function openCouponModal(){ ['c_code','c_disc','c_min'].forEach(id=>document.getElementById(id).value=''); document.getElementById('couponModal').classList.add('show'); }
+async function saveCoupon(){
+  const body={code:document.getElementById('c_code').value.toUpperCase(), discount:+document.getElementById('c_disc').value, minOrder:+document.getElementById('c_min').value||0, active:true};
+  if(!body.code||!body.discount){alert('Code and discount required');return;}
+  await api('/coupons','POST',body); closeModal('couponModal'); loadCoupons();
+}
+
+// Reviews & Feedback
+async function loadReviews(){
+  const j=await api('/reviews'); const rv=j.data||[];
+  document.getElementById('reviewList').innerHTML=rv.map(r=>
+    `<tr><td>${r.productId||'-'}</td><td>${'⭐'.repeat(r.rating||0)}</td><td>${r.title||'-'}</td><td>${r.text||''}</td></tr>`).join('')
+    || '<tr><td colspan=4>No reviews</td></tr>';
+}
+async function loadFeedback(){
+  const j=await api('/feedback'); const fb=j.data||[];
+  document.getElementById('fbList').innerHTML=fb.map(f=>
+    `<tr><td>${f.name||'-'}</td><td>${f.message||''}</td><td>${(f.at||'').slice(0,10)}</td></tr>`).join('')
+    || '<tr><td colspan=3>No feedback</td></tr>';
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+// Auto-login if token exists
+if(TOKEN) init();
+</script>
+</body>
+</html>
