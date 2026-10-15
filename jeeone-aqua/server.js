@@ -313,6 +313,223 @@ const server = http.createServer(async (req, res) => {
       return ok(res, n);
     }
 
+    // ----- Subscriptions -----
+    if (p === '/api/subscriptions' && m === 'GET') {
+      let subs = readJson('subscriptions', []);
+      const phone = parsed.query.phone;
+      if (phone) subs = subs.filter(s => s.phone === phone);
+      return ok(res, subs);
+    }
+    if (p === '/api/subscriptions' && m === 'POST') {
+      const body = await readBody(req);
+      const subs = readJson('subscriptions', []);
+      const sub = { id: uid('sub'), status: 'active', createdAt: new Date().toISOString(),
+        nextDelivery: body.nextDelivery || null, ...body };
+      subs.push(sub); writeJson('subscriptions', subs);
+      return ok(res, sub);
+    }
+    const subMatch = p.match(/^\/api\/subscriptions\/([\w-]+)$/);
+    if (subMatch && m === 'PUT') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const subs = readJson('subscriptions', []);
+      const i = subs.findIndex(x => x.id === subMatch[1]);
+      if (i < 0) return fail(res, 404, 'Subscription not found');
+      subs[i] = { ...subs[i], ...body, id: subMatch[1] };
+      writeJson('subscriptions', subs);
+      return ok(res, subs[i]);
+    }
+    if (subMatch && m === 'DELETE') {
+      if (!requireAdmin(req, res)) return;
+      let subs = readJson('subscriptions', []);
+      subs = subs.filter(x => x.id !== subMatch[1]);
+      writeJson('subscriptions', subs);
+      return ok(res, { deleted: subMatch[1] });
+    }
+
+    // ----- Delivery Slots -----
+    if (p === '/api/slots' && m === 'GET') return ok(res, readJson('slots', [
+      { id: 's1', label: 'Morning (7-11 AM)', active: true },
+      { id: 's2', label: 'Afternoon (12-4 PM)', active: true },
+      { id: 's3', label: 'Evening (5-9 PM)', active: true }
+    ]));
+    if (p === '/api/slots' && m === 'POST') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const slots = readJson('slots', []);
+      const s = { id: uid('s'), active: true, ...body };
+      slots.push(s); writeJson('slots', slots);
+      return ok(res, s);
+    }
+    const slotMatch = p.match(/^\/api\/slots\/([\w-]+)$/);
+    if (slotMatch && (m === 'PUT' || m === 'DELETE')) {
+      if (!requireAdmin(req, res)) return;
+      let slots = readJson('slots', []);
+      if (m === 'DELETE') { slots = slots.filter(x => x.id !== slotMatch[1]); }
+      else {
+        const body = await readBody(req);
+        const i = slots.findIndex(x => x.id === slotMatch[1]);
+        if (i < 0) return fail(res, 404, 'Slot not found');
+        slots[i] = { ...slots[i], ...body, id: slotMatch[1] };
+      }
+      writeJson('slots', slots);
+      return ok(res, { done: true });
+    }
+
+    // ----- Delivery Boys -----
+    if (p === '/api/delivery-boys' && m === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      return ok(res, readJson('deliveryBoys', []));
+    }
+    if (p === '/api/delivery-boys' && m === 'POST') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const boys = readJson('deliveryBoys', []);
+      const b = { id: uid('d'), active: true, ...body };
+      boys.push(b); writeJson('deliveryBoys', boys);
+      return ok(res, b);
+    }
+    const boyMatch = p.match(/^\/api\/delivery-boys\/([\w-]+)$/);
+    if (boyMatch && (m === 'PUT' || m === 'DELETE')) {
+      if (!requireAdmin(req, res)) return;
+      let boys = readJson('deliveryBoys', []);
+      if (m === 'DELETE') { boys = boys.filter(x => x.id !== boyMatch[1]); }
+      else {
+        const body = await readBody(req);
+        const i = boys.findIndex(x => x.id === boyMatch[1]);
+        if (i < 0) return fail(res, 404, 'Not found');
+        boys[i] = { ...boys[i], ...body, id: boyMatch[1] };
+      }
+      writeJson('deliveryBoys', boys);
+      return ok(res, { done: true });
+    }
+
+    // ----- Categories -----
+    if (p === '/api/categories' && m === 'GET') return ok(res, readJson('categories', [
+      { id: 'c1', name: 'Bottles', icon: 'bottle' },
+      { id: 'c2', name: 'Jars', icon: 'jar' },
+      { id: 'c3', name: 'Dispensers', icon: 'dispenser' }
+    ]));
+    if (p === '/api/categories' && m === 'POST') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const cats = readJson('categories', []);
+      const c = { id: uid('c'), ...body };
+      cats.push(c); writeJson('categories', cats);
+      return ok(res, c);
+    }
+    const catMatch = p.match(/^\/api\/categories\/([\w-]+)$/);
+    if (catMatch && m === 'DELETE') {
+      if (!requireAdmin(req, res)) return;
+      const cats = readJson('categories', []).filter(x => x.id !== catMatch[1]);
+      writeJson('categories', cats);
+      return ok(res, { deleted: catMatch[1] });
+    }
+
+    // ----- Banners -----
+    if (p === '/api/banners' && m === 'GET') return ok(res, readJson('banners', []));
+    if (p === '/api/banners' && m === 'POST') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const banners = readJson('banners', []);
+      const b = { id: uid('b'), active: true, ...body };
+      banners.push(b); writeJson('banners', banners);
+      return ok(res, b);
+    }
+    const bannerMatch = p.match(/^\/api\/banners\/([\w-]+)$/);
+    if (bannerMatch && (m === 'PUT' || m === 'DELETE')) {
+      if (!requireAdmin(req, res)) return;
+      let banners = readJson('banners', []);
+      if (m === 'DELETE') { banners = banners.filter(x => x.id !== bannerMatch[1]); }
+      else {
+        const body = await readBody(req);
+        const i = banners.findIndex(x => x.id === bannerMatch[1]);
+        if (i < 0) return fail(res, 404, 'Not found');
+        banners[i] = { ...banners[i], ...body, id: bannerMatch[1] };
+      }
+      writeJson('banners', banners);
+      return ok(res, { done: true });
+    }
+
+    // ----- Inventory -----
+    if (p === '/api/inventory' && m === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      return ok(res, readJson('inventory', []));
+    }
+    if (p === '/api/inventory' && m === 'POST') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const inv = readJson('inventory', []);
+      const i = inv.findIndex(x => x.productId === body.productId);
+      const item = { productId: body.productId, stock: body.stock || 0, lowAt: body.lowAt || 10, updatedAt: new Date().toISOString() };
+      if (i >= 0) inv[i] = item; else inv.push(item);
+      writeJson('inventory', inv);
+      return ok(res, item);
+    }
+
+    // ----- Customers (admin view of users) -----
+    if (p === '/api/customers' && m === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      const users = readJson('users', []);
+      const orders = readJson('orders', []);
+      const customers = users.map(u => {
+        const uOrders = orders.filter(o => o.phone === u.phone);
+        return { phone: u.phone, name: u.name || '',
+          orders: uOrders.length,
+          spent: uOrders.reduce((s, o) => s + (o.total || 0), 0),
+          joined: u.createdAt || '' };
+      });
+      return ok(res, customers);
+    }
+
+    // ----- Settings -----
+    if (p === '/api/settings' && m === 'GET') return ok(res, readJson('settings', {
+      deliveryFee: 0, minOrder: 0, freeAbove: 199,
+      storeName: 'JeeOne Aqua', supportPhone: '+91 97177 69977',
+      supportEmail: 'jeeoneaqua@gmail.com', codEnabled: true, onlineEnabled: true
+    }));
+    if (p === '/api/settings' && m === 'PUT') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const cur = readJson('settings', {});
+      const updated = { ...cur, ...body };
+      writeJson('settings', updated);
+      return ok(res, updated);
+    }
+
+    // ----- Reports -----
+    if (p === '/api/reports/summary' && m === 'GET') {
+      if (!requireAdmin(req, res)) return;
+      const orders = readJson('orders', []);
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      const thisMonth = today.slice(0, 7);
+      const tOrders = orders.filter(o => (o.placedAt || '').slice(0, 10) === today);
+      const mOrders = orders.filter(o => (o.placedAt || '').slice(0, 7) === thisMonth);
+      const byStatus = {};
+      orders.forEach(o => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+      return ok(res, {
+        today: { orders: tOrders.length, revenue: tOrders.reduce((s, o) => s + (o.total || 0), 0) },
+        month: { orders: mOrders.length, revenue: mOrders.reduce((s, o) => s + (o.total || 0), 0) },
+        all: { orders: orders.length, revenue: orders.reduce((s, o) => s + (o.total || 0), 0) },
+        byStatus
+      });
+    }
+
+    // ----- Assign delivery boy to order -----
+    if (p.match(/^\/api\/orders\/([\w-]+)\/assign$/) && m === 'PATCH') {
+      if (!requireAdmin(req, res)) return;
+      const oid = p.match(/^\/api\/orders\/([\w-]+)\/assign$/)[1];
+      const body = await readBody(req);
+      const orders = readJson('orders', []);
+      const o = orders.find(x => x.id === oid);
+      if (!o) return fail(res, 404, 'Order not found');
+      o.deliveryBoy = body.deliveryBoy || null;
+      o.timeline.push({ status: 'Assigned to ' + (body.deliveryBoy || 'delivery'), at: new Date().toISOString() });
+      writeJson('orders', orders);
+      return ok(res, o);
+    }
+
     return fail(res, 404, 'Not found: ' + p);
   } catch (e) {
     console.error(e);
