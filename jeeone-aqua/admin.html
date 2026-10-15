@@ -15,6 +15,10 @@ body{background:var(--ivory);color:#1f2937;min-height:100vh}
 .login-card p{text-align:center;color:var(--grey);margin-bottom:25px;font-size:14px}
 .login-card input{width:100%;padding:12px 15px;margin-bottom:15px;border:2px solid #e5e7eb;border-radius:8px;font-size:15px;outline:none}
 .login-card input:focus{border-color:var(--green)}
+.pass-wrap{position:relative;margin-bottom:15px}
+.pass-wrap input{margin-bottom:0;padding-right:45px}
+.pass-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:5px;color:var(--grey)}
+.pass-toggle:hover{color:var(--green)}
 .login-card button{width:100%;padding:13px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer}
 .login-card button:hover{background:var(--dark)}
 #loginErr{color:var(--red);text-align:center;margin-top:10px;font-size:14px;display:none}
@@ -74,7 +78,10 @@ select.stsel{padding:5px 10px;border-radius:6px;border:1px solid #d1d5db;font-si
     <h1>💧 JeeOne Aqua</h1>
     <p>Admin Panel</p>
     <input type="text" id="u" placeholder="Username" autocomplete="off">
-    <input type="password" id="p" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="pass-wrap">
+      <input type="password" id="p" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" class="pass-toggle" onclick="togglePass()" id="passToggle">👁️</button>
+    </div>
     <button onclick="doLogin()">Login</button>
     <div id="loginErr">Invalid username or password</div>
   </div>
@@ -174,6 +181,11 @@ async function api(path, method='GET', body) {
 }
 
 // Login
+function togglePass(){
+  const p=document.getElementById('p'), t=document.getElementById('passToggle');
+  if(p.type==='password'){ p.type='text'; t.textContent='🙈'; }
+  else { p.type='password'; t.textContent='👁️'; }
+}
 async function doLogin() {
   const u=document.getElementById('u').value, p=document.getElementById('p').value;
   try {
