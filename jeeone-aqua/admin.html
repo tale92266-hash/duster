@@ -3,459 +3,596 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>JeeOne Aqua — Admin Panel</title>
+<title>JeeOne Aqua — Admin Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--green:#1E5A3C;--dark:#123C28;--gold:#C9A227;--ivory:#F5F1E6;--white:#fff;--grey:#6b7280;--red:#dc2626;--line:#e5e7eb}
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
-body{background:var(--ivory);color:#1f2937;min-height:100vh;padding-bottom:env(safe-area-inset-bottom)}
-/* ---------- LOGIN ---------- */
-#login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--dark),var(--green));padding:20px}
-.login-card{background:var(--white);padding:36px 30px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:360px;max-width:94vw}
-.login-card h1{color:var(--green);text-align:center;font-size:26px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px}
-.login-card p{text-align:center;color:var(--grey);margin-bottom:24px;font-size:14px}
-.login-card input{width:100%;padding:13px 15px;margin-bottom:14px;border:2px solid var(--line);border-radius:10px;font-size:15px;outline:none;transition:border .2s}
-.login-card input:focus{border-color:var(--green)}
-.login-card button.login-btn{width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}
-.login-card button.login-btn:hover{background:var(--dark)}
-.login-card button.login-btn:active{transform:scale(.98)}
-#loginErr{color:var(--red);text-align:center;margin-top:12px;font-size:14px;display:none}
-.pass-wrap{position:relative;margin-bottom:14px}
-.pass-wrap input{margin-bottom:0;padding-right:48px}
-.pass-wrap .pass-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;background:none;border:none;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;border-radius:8px}
-.pass-wrap .pass-toggle:hover{background:#f3f4f6}
-/* ---------- APP SHELL ---------- */
-#app{display:none;min-height:100vh}
-.topbar{background:var(--dark);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
-.topbar .brand{font-size:19px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:8px}.topbar .brand svg{flex-shrink:0}
-.topbar .brand small{color:#fff;font-weight:400;font-size:12px;opacity:.8}
-.topbar .logout{background:transparent;border:1.5px solid var(--gold);color:var(--gold);padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
-.topbar .logout:active{background:var(--gold);color:var(--dark)}
-.page{padding:16px 14px 90px;max-width:1100px;margin:0 auto}
-.page h2{color:var(--dark);margin-bottom:14px;font-size:20px;display:flex;align-items:center;gap:8px}
-/* ---------- CARDS ---------- */
-.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
-@media(min-width:700px){.cards{grid-template-columns:repeat(4,1fr)}}
-.card{background:var(--white);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05);border-left:4px solid var(--green)}
-.card.gold{border-left-color:var(--gold)}
-.card .num{font-size:26px;font-weight:800;color:var(--green)}
-.card .lbl{color:var(--grey);font-size:12px;margin-top:4px}
-/* ---------- TABLES ---------- */
-.tbl-wrap{background:var(--white);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);overflow-x:auto;margin-bottom:16px}
-table{width:100%;border-collapse:collapse;min-width:520px}
-th{background:var(--green);color:#fff;padding:11px 12px;text-align:left;font-size:12px;font-weight:700;white-space:nowrap}
-td{padding:11px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;vertical-align:middle}
-tr:last-child td{border:none}
-tr:active{background:#f9fafb}
-/* ---------- BUTTONS ---------- */
-.btn{padding:7px 13px;border-radius:8px;border:none;cursor:pointer;font-size:12.5px;font-weight:700;white-space:nowrap}
-.btn-add{background:var(--green);color:#fff;padding:11px 20px;margin-bottom:14px;font-size:14px;border-radius:10px;box-shadow:0 2px 8px rgba(30,90,60,.3)}
-.btn-add:active{transform:scale(.97)}
-.btn-edit{background:#dbeafe;color:#1d4ed8;margin-right:6px}
-.btn-del{background:#fee2e2;color:var(--red)}
-.btn:active{opacity:.8}
-.status{padding:4px 11px;border-radius:20px;font-size:11.5px;font-weight:700;white-space:nowrap}
-.st-Confirmed,.st-active{background:#dbeafe;color:#1d4ed8}
-.st-Packed{background:#fef3c7;color:#92400e}
-.st-Shipped{background:#e0e7ff;color:#3730a3}
-.st-Delivered{background:#d1fae5;color:#065f46}
-.st-Cancelled,.st-cancelled,.st-inactive{background:#fee2e2;color:#991b1b}
-.st-paused{background:#fef3c7;color:#92400e}
-/* ---------- BOTTOM NAV (mobile) ---------- */
-.bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--line);z-index:100;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
-.bottomnav button{flex:1;min-width:64px;border:none;background:none;padding:9px 4px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--grey);font-size:10px;font-weight:600}
-.bottomnav button .ic{display:flex;align-items:center;justify-content:center}.bottomnav button .ic svg{width:22px;height:22px}.sidenav button svg{width:19px;height:19px;flex-shrink:0}
-.bottomnav button.active{color:var(--green)}
-.bottomnav button:active{background:#f3f4f6}
-/* Desktop sidebar */
-.sidenav{display:none}
-@media(min-width:900px){
-  .bottomnav{display:none}
-  .shell{display:flex}
-  .sidenav{display:block;width:220px;background:var(--white);border-right:1px solid var(--line);padding:14px 0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;flex-shrink:0}
-  .sidenav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:12px 20px;border:none;background:none;font-size:14px;cursor:pointer;color:#374151;border-left:3px solid transparent;font-weight:500}
-  .sidenav button:hover{background:#f3f4f6}
-  .sidenav button.active{background:#ecfdf5;color:var(--green);font-weight:700;border-left-color:var(--green)}
-  .page{padding-bottom:30px}
+:root{
+  --green:#1E5A3C; --green-dark:#123C28; --green-light:#e8f5ee;
+  --gold:#C9A227; --gold-light:#faf3dd;
+  --bg:#f4f6f8; --surface:#ffffff; --border:#e6eaee;
+  --text:#101828; --text-2:#475467; --text-3:#98a2b3;
+  --red:#d92d20; --red-bg:#fef3f2; --blue:#175cd3; --blue-bg:#eff8ff;
+  --amber:#dc6803; --amber-bg:#fffaeb; --success:#027a48; --success-bg:#ecfdf3;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.06);
+  --shadow-lg:0 12px 32px -8px rgba(16,24,40,.18);
+  --radius:14px;
 }
-/* ---------- MODAL ---------- */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;align-items:flex-end;justify-content:center}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;padding-bottom:env(safe-area-inset-bottom)}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#d0d5dd;border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+
+/* ============ LOGIN ============ */
+#login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(1200px 600px at 20% -10%,#1E5A3C 0%,#123C28 55%,#0b241a 100%);position:relative;overflow:hidden}
+#login::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.14) 0%,transparent 70%);top:-150px;right:-100px}
+#login::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,.08) 0%,transparent 70%);bottom:-120px;left:-80px}
+.login-card{position:relative;z-index:1;background:var(--surface);padding:40px 34px;border-radius:22px;box-shadow:var(--shadow-lg);width:380px;max-width:94vw;animation:rise .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.login-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px}
+.login-logo .drop{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--green-dark));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(30,90,60,.35)}
+.login-card h1{font-size:23px;font-weight:800;color:var(--green-dark);letter-spacing:-.3px}
+.login-card .sub{text-align:center;color:var(--text-3);margin:6px 0 26px;font-size:13px;font-weight:500;letter-spacing:.4px;text-transform:uppercase}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px}
+.field input{width:100%;padding:13px 15px;border:1.5px solid var(--border);border-radius:11px;font-size:15px;outline:none;transition:.2s;background:#fcfcfd;font-family:inherit}
+.field input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 4px rgba(30,90,60,.08)}
+.pass-wrap{position:relative}
+.pass-wrap input{padding-right:48px}
+.pass-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:9px;color:var(--text-3)}
+.pass-toggle:hover{background:#f2f4f7;color:var(--text-2)}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:.2s;box-shadow:0 4px 14px rgba(30,90,60,.3)}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,90,60,.4)}
+.login-btn:active{transform:scale(.98)}
+#loginErr{display:none;margin-top:12px;padding:10px 14px;background:var(--red-bg);color:var(--red);border-radius:9px;font-size:13px;font-weight:500;text-align:center}
+
+/* ============ SHELL ============ */
+#app{display:none;min-height:100vh}
+.topbar{background:linear-gradient(135deg,var(--green-dark),var(--green));color:#fff;padding:0 18px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(18,60,40,.25)}
+.topbar .brand{display:flex;align-items:center;gap:11px}
+.topbar .brand .drop{width:36px;height:36px;border-radius:11px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.topbar .brand .t1{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.topbar .brand .t1 span{color:var(--gold)}
+.topbar .brand .t2{font-size:11px;opacity:.65;font-weight:500;letter-spacing:.6px;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.admin-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);padding:7px 13px 7px 8px;border-radius:99px;font-size:13px;font-weight:600}
+.admin-badge .avatar{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--green-dark);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.logout-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;transition:.2s;font-family:inherit}
+.logout-btn:hover{background:rgba(255,255,255,.2)}
+
+/* ============ LAYOUT ============ */
+.shell{display:flex;min-height:calc(100vh - 62px)}
+.sidenav{display:none}
+@media(min-width:960px){
+  .sidenav{display:block;width:248px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:18px 12px;position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto}
+  .sidenav .nav-label{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;padding:14px 14px 8px}
+  .sidenav button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 14px;border:none;background:none;font-size:14px;cursor:pointer;color:var(--text-2);border-radius:10px;font-weight:500;font-family:inherit;transition:.15s;margin-bottom:2px}
+  .sidenav button svg{width:19px;height:19px;flex-shrink:0;opacity:.75}
+  .sidenav button:hover{background:#f2f4f7;color:var(--text)}
+  .sidenav button.active{background:var(--green-light);color:var(--green-dark);font-weight:700}
+  .sidenav button.active svg{opacity:1;color:var(--green)}
+}
+.page{flex:1;padding:22px 18px 100px;max-width:1160px;margin:0 auto;width:100%}
+@media(min-width:960px){.page{padding:28px 30px 40px}}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.page-head h2{font-size:21px;font-weight:800;letter-spacing:-.3px;color:var(--text)}
+.page-head p{font-size:13px;color:var(--text-3);margin-top:2px}
+
+/* ============ STAT CARDS ============ */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:22px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;transition:.2s}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--green)}
+.stat.gold::before{background:var(--gold)}
+.stat .icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.stat .icon.g{background:var(--green-light);color:var(--green)}
+.stat .icon.y{background:var(--gold-light);color:#92690e}
+.stat .icon svg{width:20px;height:20px}
+.stat .num{font-size:25px;font-weight:800;letter-spacing:-.5px}
+.stat .lbl{font-size:12.5px;color:var(--text-3);font-weight:500;margin-top:2px}
+.stat .trend{font-size:11.5px;font-weight:700;margin-top:6px;display:inline-block;padding:2px 8px;border-radius:99px}
+.trend.up{background:var(--success-bg);color:var(--success)}
+.trend.down{background:var(--red-bg);color:var(--red)}
+
+/* ============ CARDS & TABLES ============ */
+.panel{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:18px}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.panel-head h3{font-size:15px;font-weight:700}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px}
+thead th{background:#f9fafb;color:var(--text-2);padding:12px 16px;text-align:left;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-bottom:1px solid var(--border)}
+tbody td{padding:13px 16px;border-bottom:1px solid #f2f4f7;font-size:13.5px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:#fafbfc}
+.cell-main{font-weight:600;color:var(--text)}
+.cell-sub{font-size:12px;color:var(--text-3);margin-top:1px}
+
+/* ============ BADGES & BUTTONS ============ */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-green{background:var(--success-bg);color:var(--success)}
+.b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-grey{background:#f2f4f7;color:var(--text-2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:.15s;white-space:nowrap}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(30,90,60,.25)}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-ghost{background:#f2f4f7;color:var(--text-2)}
+.btn-ghost:hover{background:#e4e7ec}
+.btn-danger-soft{background:var(--red-bg);color:var(--red)}
+.btn-danger-soft:hover{background:#fee4e2}
+.btn-blue-soft{background:var(--blue-bg);color:var(--blue)}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.action-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{position:relative;flex:1;min-width:200px;max-width:340px}
+.search-box input{width:100%;padding:10px 14px 10px 40px;border:1.5px solid var(--border);border-radius:10px;font-size:13.5px;outline:none;font-family:inherit;background:var(--surface)}
+.search-box input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(30,90,60,.08)}
+.search-box svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--text-3)}
+
+/* ============ BOTTOM NAV ============ */
+.bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;box-shadow:0 -4px 20px rgba(16,24,40,.06)}
+.bottomnav::-webkit-scrollbar{display:none}
+.bottomnav button{flex:1;min-width:62px;border:none;background:none;padding:10px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--text-3);font-size:10px;font-weight:600;font-family:inherit;transition:.15s}
+.bottomnav button svg{width:22px;height:22px}
+.bottomnav button.active{color:var(--green)}
+.bottomnav button.active svg{transform:scale(1.1)}
+@media(min-width:960px){.bottomnav{display:none}}
+
+/* ============ MODAL ============ */
+.modal{display:none;position:fixed;inset:0;background:rgba(16,24,40,.55);backdrop-filter:blur(3px);z-index:300;align-items:flex-end;justify-content:center}
 .modal.show{display:flex}
-@media(min-width:700px){.modal{align-items:center}}
-.modal-box{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;animation:slideUp .25s ease}
-@media(min-width:700px){.modal-box{border-radius:18px}}
-@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.modal-box h3{color:var(--dark);margin-bottom:16px;font-size:18px}
-.modal-box label{display:block;font-size:12.5px;font-weight:700;color:#374151;margin:12px 0 5px}
-.modal-box input,.modal-box select,.modal-box textarea{width:100%;padding:11px 13px;border:2px solid var(--line);border-radius:10px;font-size:14px;outline:none;background:#fff}
-.modal-box input:focus,.modal-box select:focus,.modal-box textarea:focus{border-color:var(--green)}
-.modal-btns{display:flex;gap:10px;margin-top:20px}
-.modal-btns button{flex:1;padding:13px;border-radius:10px;border:none;font-weight:700;cursor:pointer;font-size:14px}
-.btn-save{background:var(--green);color:#fff}
-.btn-cancel{background:#f3f4f6;color:#374151}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-select.stsel{padding:6px 8px;border-radius:8px;border:1.5px solid var(--line);font-size:12.5px;background:#fff;max-width:130px}
-.tab{display:none}.tab.active{display:block;animation:fadeIn .2s}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.empty{padding:30px;text-align:center;color:var(--grey);font-size:14px}
-.chip{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;background:#ecfdf5;color:var(--green);margin:2px}
-.chip.warn{background:#fef3c7;color:#92400e}
-.chip.danger{background:#fee2e2;color:#991b1b}
-.settings-group{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
-.settings-group h3{color:var(--dark);font-size:15px;margin-bottom:12px}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6}
+@media(min-width:700px){.modal{align-items:center;padding:20px}}
+.modal-box{background:var(--surface);border-radius:22px 22px 0 0;padding:26px 22px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.2,.9,.3,1.1)}
+@media(min-width:700px){.modal-box{border-radius:20px}}
+@keyframes slideUp{from{transform:translateY(50px);opacity:0}to{transform:none;opacity:1}}
+.modal-box h3{font-size:17px;font-weight:800;margin-bottom:4px}
+.modal-box .m-sub{font-size:13px;color:var(--text-3);margin-bottom:16px}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-btns{display:flex;gap:10px;margin-top:22px}
+.modal-btns .btn{flex:1;padding:13px;justify-content:center;font-size:14px;border-radius:11px}
+
+/* ============ TOAST ============ */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:12px 22px;border-radius:12px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:400;box-shadow:var(--shadow-lg);max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{background:var(--success)}
+#toast.error{background:var(--red)}
+@media(min-width:960px){#toast{bottom:30px}}
+
+/* ============ MISC ============ */
+.tab{display:none}.tab.active{display:block;animation:fadeIn .25s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.empty{padding:44px 20px;text-align:center;color:var(--text-3)}
+.empty svg{width:44px;height:44px;opacity:.3;margin-bottom:10px}
+.empty p{font-size:14px;font-weight:500}
+.skel{background:linear-gradient(90deg,#f2f4f7 25%,#e4e7ec 50%,#f2f4f7 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:8px}
+@keyframes shimmer{to{background-position:-200% 0}}
+select.input,select.stsel{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;background:var(--surface);font-family:inherit;outline:none;cursor:pointer;max-width:150px}
+select.input:focus{border-color:var(--green)}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;background:var(--green-light);color:var(--green);margin:2px}
+.settings-card{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.settings-card h3{font-size:14.5px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.settings-card h3 svg{width:17px;height:17px;color:var(--green)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f2f4f7}
 .toggle-row:last-child{border:none}
-.toggle-row span{font-size:14px}
-.switch{position:relative;width:48px;height:27px;flex-shrink:0}
+.toggle-row .t{font-size:14px;font-weight:500}
+.toggle-row .d{font-size:12px;color:var(--text-3)}
+.switch{position:relative;width:48px;height:28px;flex-shrink:0}
 .switch input{opacity:0;width:0;height:0}
-.slider{position:absolute;inset:0;background:#d1d5db;border-radius:27px;cursor:pointer;transition:.2s}
-.slider:before{position:absolute;content:"";height:21px;width:21px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.slider{position:absolute;inset:0;background:#d0d5dd;border-radius:28px;cursor:pointer;transition:.25s}
+.slider:before{position:absolute;content:"";height:22px;width:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .switch input:checked+.slider{background:var(--green)}
-.switch input:checked+.slider:before{transform:translateX(21px)}
-.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-@media(min-width:700px){.report-grid{grid-template-columns:repeat(3,1fr)}}
-.rpt{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
-.rpt h4{font-size:12px;color:var(--grey);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-.rpt .big{font-size:24px;font-weight:800;color:var(--dark)}
-.rpt .sub{font-size:13px;color:var(--grey);margin-top:4px}
+.switch input:checked+.slider:before{transform:translateX(20px)}
+.progress{height:7px;background:#f2f4f7;border-radius:99px;overflow:hidden;margin-top:8px}
+.progress>div{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),#2d7a4f);transition:width .5s}
+.avatar-sm{width:34px;height:34px;border-radius:10px;background:var(--green-light);color:var(--green);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-right:10px;vertical-align:middle}
+.price{font-weight:700;font-size:14px}
+.low-stock{color:var(--red);font-weight:700}
 </style>
 </head>
 <body>
 
 <div id="login">
   <div class="login-card">
-    <h1><svg width="26" height="26" viewBox="0 0 24 24" fill="#4FC3F7" style="vertical-align:-5px"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg> JeeOne Aqua</h1>
-    <p>Admin Panel</p>
-    <input type="text" id="u" placeholder="Username" autocomplete="off">
-    <div class="pass-wrap">
-      <input type="password" id="p" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
-      <button type="button" class="pass-toggle" onclick="togglePass()" id="passToggle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    <div class="login-logo">
+      <div class="drop"><svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></div>
+      <h1>JeeOne Aqua</h1>
     </div>
-    <button class="login-btn" onclick="doLogin()">Login</button>
+    <div class="sub">Admin Console</div>
+    <div class="field"><label>Username</label><input type="text" id="u" placeholder="Enter username" autocomplete="off"></div>
+    <div class="field"><label>Password</label>
+      <div class="pass-wrap">
+        <input type="password" id="p" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" class="pass-toggle" onclick="togglePass()" id="passToggle"></button>
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
     <div id="loginErr">Invalid username or password</div>
   </div>
 </div>
 
 <div id="app">
   <div class="topbar">
-    <div class="brand"><svg width="26" height="26" viewBox="0 0 24 24" fill="#4FC3F7" style="vertical-align:-5px"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg> JeeOne Aqua <small>Admin</small></div>
-    <button class="logout" onclick="logout()">Logout</button>
+    <div class="brand">
+      <div class="drop"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg></div>
+      <div><div class="t1">JeeOne <span>Aqua</span></div><div class="t2">Admin Console</div></div>
+    </div>
+    <div class="topbar-right">
+      <div class="admin-badge"><div class="avatar">A</div><span>Admin</span></div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
   </div>
   <div class="shell">
     <div class="sidenav" id="sidenav"></div>
-    <div class="page">
-      <div id="tab-dash" class="tab active"><h2>Dashboard</h2><div id="dashContent"></div></div>
-      <div id="tab-products" class="tab"><h2>Products</h2><div id="prodContent"></div></div>
-      <div id="tab-orders" class="tab"><h2>Orders</h2><div id="orderContent"></div></div>
-      <div id="tab-subs" class="tab"><h2>Subscriptions</h2><div id="subsContent"></div></div>
-      <div id="tab-slots" class="tab"><h2>Delivery Slots</h2><div id="slotsContent"></div></div>
-      <div id="tab-boys" class="tab"><h2>Delivery Riders</h2><div id="boysContent"></div></div>
-      <div id="tab-inventory" class="tab"><h2>Inventory</h2><div id="invContent"></div></div>
-      <div id="tab-cats" class="tab"><h2>Categories</h2><div id="catsContent"></div></div>
-      <div id="tab-banners" class="tab"><h2>Banners</h2><div id="bannersContent"></div></div>
-      <div id="tab-customers" class="tab"><h2>Customers</h2><div id="custContent"></div></div>
-      <div id="tab-coupons" class="tab"><h2>Coupons</h2><div id="couponContent"></div></div>
-      <div id="tab-reviews" class="tab"><h2>Reviews</h2><div id="revContent"></div></div>
-      <div id="tab-feedback" class="tab"><h2>Feedback</h2><div id="fbContent"></div></div>
-      <div id="tab-reports" class="tab"><h2>Reports</h2><div id="rptContent"></div></div>
-      <div id="tab-settings" class="tab"><h2>Settings</h2><div id="setContent"></div></div>
-    </div>
+    <div class="page" id="page"></div>
   </div>
   <div class="bottomnav" id="bottomnav"></div>
 </div>
 
-<div class="modal" id="genModal"><div class="modal-box"><h3 id="gmTitle"></h3><div id="gmBody"></div><div class="modal-btns"><button class="btn-save" id="gmSave">Save</button><button class="btn-cancel" onclick="closeModal()">Cancel</button></div></div></div>
+<div class="modal" id="genModal"><div class="modal-box"><h3 id="gmTitle"></h3><div class="m-sub" id="gmSub"></div><div id="gmBody"></div><div class="modal-btns"><button class="btn btn-primary" id="gmSave">Save</button><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div></div></div>
+<div id="toast"></div>
 
 <script>
 const API = location.pathname.includes('/jeeone') ? '/jeeone/api' : '/api';
 let TOKEN = localStorage.getItem('jeeone_admin_token') || '';
 const H = () => ({'Content-Type':'application/json','Authorization':'Bearer '+TOKEN});
+const $ = id => document.getElementById(id);
+
+/* ---------- SVG ICONS ---------- */
+const I = (p, s=20) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ICONS = {
+  dash: I('<line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/>'),
+  box: I('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22" x2="12" y2="12"/>'),
+  cart: I('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>'),
+  refresh: I('<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>'),
+  clock: I('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
+  bike: I('<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/>'),
+  clip: I('<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>'),
+  tag: I('<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>'),
+  image: I('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>'),
+  users: I('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+  ticket: I('<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>'),
+  star: I('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'),
+  chat: I('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'),
+  trend: I('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'),
+  gear: I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>'),
+  eye: I('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
+  eyeOff: I('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'),
+  search: I('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', 17),
+  plus: I('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>', 15),
+  inbox: I('<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>', 44),
+  rupee: I('<path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3M9 13c6.667 0 6.667-10 0-10"/>'),
+};
+$('passToggle').innerHTML = ICONS.eye;
+
+/* ---------- API ---------- */
 async function api(path, method='GET', body){
   const r = await fetch(API+path,{method,headers:H(),body:body?JSON.stringify(body):undefined});
   const j = await r.json();
   if(j.error==='Auth required'){logout();throw new Error('auth');}
   return j;
 }
-function togglePass(){const p=document.getElementById('p'),t=document.getElementById('passToggle');if(p.type==='password'){p.type='text';t.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';}else{p.type='password';t.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}}
+function toast(msg, type=''){
+  const t=$('toast'); t.textContent=msg; t.className='show '+type;
+  clearTimeout(t._tm); t._tm=setTimeout(()=>t.className='',2600);
+}
+
+/* ---------- AUTH ---------- */
+function togglePass(){const p=$('p'),t=$('passToggle');if(p.type==='password'){p.type='text';t.innerHTML=ICONS.eyeOff;}else{p.type='password';t.innerHTML=ICONS.eye;}}
 async function doLogin(){
-  const u=document.getElementById('u').value,p=document.getElementById('p').value;
-  document.getElementById('loginErr').style.display='none';
+  const u=$('u').value,p=$('p').value; $('loginErr').style.display='none';
   try{const j=await api('/admin/login','POST',{username:u,password:p});
     if(j.ok){TOKEN=j.data.token;localStorage.setItem('jeeone_admin_token',TOKEN);init();}
-    else document.getElementById('loginErr').style.display='block';
-  }catch(e){document.getElementById('loginErr').style.display='block';}
+    else $('loginErr').style.display='block';
+  }catch(e){$('loginErr').style.display='block';}
 }
 function logout(){localStorage.removeItem('jeeone_admin_token');TOKEN='';location.reload();}
-function closeModal(){document.getElementById('genModal').classList.remove('show');}
-function openModal(title, fieldsHtml, onSave){
-  document.getElementById('gmTitle').textContent=title;
-  document.getElementById('gmBody').innerHTML=fieldsHtml;
-  document.getElementById('gmSave').onclick=onSave;
-  document.getElementById('genModal').classList.add('show');
+function closeModal(){$('genModal').classList.remove('show');}
+function openModal(title, sub, bodyHtml, onSave){
+  $('gmTitle').textContent=title; $('gmSub').textContent=sub||'';
+  $('gmBody').innerHTML=bodyHtml; $('gmSave').onclick=onSave;
+  $('genModal').classList.add('show');
 }
-const F=(id,label,type='text',val='',extra='')=>`<label>${label}</label><input id="${id}" type="${type}" value="${val}" ${extra}>`;
-const FA=(id,label,val='')=>`<label>${label}</label><textarea id="${id}" rows="2">${val}</textarea>`;
-const FS=(id,label,opts,val='')=>`<label>${label}</label><select id="${id}">${opts.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}</select>`;
-const gv=id=>document.getElementById(id).value;
+const F=(id,label,type='text',val='',ph='')=>`<div class="field"><label>${label}</label><input id="${id}" type="${type}" value="${val}" placeholder="${ph}"></div>`;
+const FA=(id,label,val='')=>`<div class="field"><label>${label}</label><textarea id="${id}" rows="2" style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;outline:none;resize:vertical">${val}</textarea></div>`;
+const FS=(id,label,opts,val='')=>`<div class="field"><label>${label}</label><select id="${id}" class="input" style="width:100%">${opts.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}</select></div>`;
+const gv=id=>$(id).value;
 
-// Navigation
+/* ---------- NAV ---------- */
 const NAV=[
-  ['dash','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>','Dashboard'],['products','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22" x2="12" y2="12"/></svg>','Products'],['orders','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>','Orders'],
-  ['subs','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>','Subs'],['slots','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>','Slots'],['boys','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>','Riders'],
-  ['inventory','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>','Stock'],['cats','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>','Cats'],['banners','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>','Banners'],
-  ['customers','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>','Customers'],['coupons','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>','Coupons'],['reviews','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>','Reviews'],
-  ['feedback','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>','Feedback'],['reports','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>','Reports'],['settings','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>','Settings']
+  ['dash','dash','Dashboard','Overview & stats'],
+  ['products','box','Products','Manage catalogue'],
+  ['orders','cart','Orders','Track & fulfil'],
+  ['subs','refresh','Subscriptions','Recurring plans'],
+  ['slots','clock','Slots','Delivery windows'],
+  ['boys','bike','Riders','Delivery team'],
+  ['inventory','clip','Inventory','Stock levels'],
+  ['cats','tag','Categories','Product groups'],
+  ['banners','image','Banners','Promotions'],
+  ['customers','users','Customers','Buyer list'],
+  ['coupons','ticket','Coupons','Discount codes'],
+  ['reviews','star','Reviews','Ratings'],
+  ['feedback','chat','Feedback','Messages'],
+  ['reports','trend','Reports','Analytics'],
+  ['settings','gear','Settings','Store config'],
 ];
+let curTab='dash';
 function buildNav(){
-  const bn=document.getElementById('bottomnav'), sn=document.getElementById('sidenav');
-  bn.innerHTML=NAV.map(([k,ic,lb])=>`<button data-tab="${k}" onclick="goTab('${k}')"><span class="ic">${ic}</span>${lb}</button>`).join('');
-  sn.innerHTML=NAV.map(([k,ic,lb])=>`<button data-tab="${k}" onclick="goTab('${k}')">${ic} ${lb}</button>`).join('');
+  $('bottomnav').innerHTML=NAV.map(([k,ic,lb])=>`<button data-t="${k}" onclick="goTab('${k}')">${ICONS[ic]}<span>${lb}</span></button>`).join('');
+  $('sidenav').innerHTML='<div class="nav-label">Manage</div>'+NAV.slice(0,10).map(([k,ic,lb])=>`<button data-t="${k}" onclick="goTab('${k}')">${ICONS[ic]}${lb}</button>`).join('')
+    +'<div class="nav-label">Insights</div>'+NAV.slice(10).map(([k,ic,lb])=>`<button data-t="${k}" onclick="goTab('${k}')">${ICONS[ic]}${lb}</button>`).join('');
 }
 function goTab(k){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+k).classList.add('active');
-  document.querySelectorAll('#bottomnav button,#sidenav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===k));
-  document.querySelector('.page').scrollTop=0; window.scrollTo(0,0);
-  LOADERS[k]&&LOADERS[k]();
+  curTab=k;
+  document.querySelectorAll('#bottomnav button,#sidenav button').forEach(b=>b.classList.toggle('active',b.dataset.t===k));
+  window.scrollTo({top:0,behavior:'smooth'});
+  RENDER[k]();
 }
+function pageHead(title, sub, actions=''){
+  return `<div class="page-head"><div><h2>${title}</h2>${sub?`<p>${sub}</p>`:''}</div><div class="action-bar" style="margin:0">${actions}</div></div>`;
+}
+function badge(text, cls){
+  const map={'Confirmed':'b-blue','Packed':'b-amber','Shipped':'b-blue','Delivered':'b-green','Cancelled':'b-red','active':'b-green','paused':'b-amber','cancelled':'b-red'};
+  return `<span class="badge ${cls||map[text]||'b-grey'}"><span class="dot"></span>${text}</span>`;
+}
+function emptyState(msg){return `<div class="panel"><div class="empty">${ICONS.inbox}<p>${msg}</p></div></div>`;}
+function skeletonRows(n=4){return `<div class="panel"><div style="padding:16px">${Array(n).fill('<div class="skel" style="height:44px;margin-bottom:10px"></div>').join('')}</div></div>`;}
 
 async function init(){
-  document.getElementById('login').style.display='none';
-  document.getElementById('app').style.display='block';
+  $('login').style.display='none'; $('app').style.display='block';
   buildNav(); goTab('dash');
 }
 
-// ---- Dashboard ----
-async function loadDash(){
-  const el=document.getElementById('dashContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- DASHBOARD ---------- */
+async function rDash(){
+  const pg=$('page'); pg.innerHTML=pageHead('Dashboard','Business overview at a glance')+skeletonRows(2);
   try{
     const [pr,or,cp,rp]=await Promise.all([api('/products'),api('/orders'),api('/coupons'),api('/reports/summary')]);
     const prods=pr.data||[],orders=or.data||[],coups=cp.data||[],s=rp.data||{};
-    el.innerHTML=`
-    <div class="cards">
-      <div class="card"><div class="num">${prods.length}</div><div class="lbl">Products</div></div>
-      <div class="card gold"><div class="num">${s.all?s.all.orders:orders.length}</div><div class="lbl">Total Orders</div></div>
-      <div class="card"><div class="num">₹${((s.all?s.all.revenue:0)).toLocaleString('en-IN')}</div><div class="lbl">Total Revenue</div></div>
-      <div class="card gold"><div class="num">${coups.length}</div><div class="lbl">Coupons</div></div>
-      <div class="card"><div class="num">₹${((s.today?s.today.revenue:0)).toLocaleString('en-IN')}</div><div class="lbl">Today's Revenue</div></div>
-      <div class="card"><div class="num">${s.today?s.today.orders:0}</div><div class="lbl">Today's Orders</div></div>
-      <div class="card gold"><div class="num">₹${((s.month?s.month.revenue:0)).toLocaleString('en-IN')}</div><div class="lbl">Month Revenue</div></div>
-      <div class="card"><div class="num">${s.month?s.month.orders:0}</div><div class="lbl">Month Orders</div></div>
+    const rev=v=>(v||0).toLocaleString('en-IN');
+    pg.innerHTML=pageHead('Dashboard','Business overview at a glance')+`
+    <div class="stats">
+      <div class="stat"><div class="icon g">${ICONS.box}</div><div class="num">${prods.length}</div><div class="lbl">Products</div></div>
+      <div class="stat gold"><div class="icon y">${ICONS.cart}</div><div class="num">${s.all?s.all.orders:orders.length}</div><div class="lbl">Total Orders</div></div>
+      <div class="stat"><div class="icon g">${ICONS.rupee}</div><div class="num">₹${rev(s.all&&s.all.revenue)}</div><div class="lbl">Total Revenue</div></div>
+      <div class="stat gold"><div class="icon y">${ICONS.ticket}</div><div class="num">${coups.length}</div><div class="lbl">Active Coupons</div></div>
+      <div class="stat"><div class="icon g">${ICONS.trend}</div><div class="num">₹${rev(s.today&&s.today.revenue)}</div><div class="lbl">Today's Revenue</div><span class="trend up">${s.today&&s.today.orders||0} orders</span></div>
+      <div class="stat gold"><div class="icon y">${ICONS.clock}</div><div class="num">₹${rev(s.month&&s.month.revenue)}</div><div class="lbl">This Month</div><span class="trend up">${s.month&&s.month.orders||0} orders</span></div>
     </div>
-    <h2>Recent Orders</h2>
-    <div class="tbl-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
-    <tbody>${orders.slice(-6).reverse().map(o=>`<tr><td><b>${o.id}</b></td><td>${o.name||'-'}</td><td>₹${o.total||0}</td><td><span class="status st-${o.status}">${o.status}</span></td></tr>`).join('')||'<tr><td colspan=4 class="empty">No orders yet</td></tr>'}</tbody></table></div>`;
-  }catch(e){el.innerHTML='<div class="empty">Failed to load</div>';}
+    <div class="panel"><div class="panel-head"><h3>Recent Orders</h3><button class="btn btn-ghost btn-sm" onclick="goTab('orders')">View all</button></div>
+    <div class="tbl-scroll"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>
+    ${orders.slice(-6).reverse().map(o=>`<tr><td><div class="cell-main">${o.id}</div><div class="cell-sub">${(o.placedAt||'').slice(0,10)}</div></td><td>${o.name||'-'}</td><td class="price">₹${rev(o.total)}</td><td>${badge(o.status)}</td></tr>`).join('')||'<tr><td colspan=4>'+emptyState('No orders yet').replace(/<\/?div[^>]*>/g,'')+'</td></tr>'}
+    </tbody></table></div></div>`;
+  }catch(e){pg.innerHTML=pageHead('Dashboard','')+emptyState('Failed to load dashboard');}
 }
 
-// ---- Products ----
-async function loadProducts(){
-  const el=document.getElementById('prodContent'); el.innerHTML='<div class="empty">Loading...</div>';
-  const j=await api('/products'); const ps=j.data||[];
-  window._prods=ps;
-  el.innerHTML=`<button class="btn btn-add" onclick="prodForm()">+ Add Product</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Price</th><th>Cat</th><th></th></tr></thead><tbody>
-  ${ps.map(p=>`<tr><td><b>${p.name}</b><br><small style="color:var(--grey)">${p.id}</small></td><td>₹${p.price}</td><td>${p.category||'-'}</td>
-  <td style="white-space:nowrap"><button class="btn btn-edit" onclick="prodForm('${p.id}')">Edit</button><button class="btn btn-del" onclick="delProd('${p.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan=4 class="empty">No products</td></tr>'}
-  </tbody></table></div>`;
+/* ---------- PRODUCTS ---------- */
+async function rProducts(){
+  const pg=$('page');
+  pg.innerHTML=pageHead('Products','Manage your catalogue',
+    `<div class="search-box">${ICONS.search}<input id="pq" placeholder="Search products..." oninput="filterRows('prodRows',this.value)"></div><button class="btn btn-primary" onclick="prodForm()">${ICONS.plus} Add Product</button>`)+skeletonRows();
+  const j=await api('/products'); const ps=j.data||[]; window._prods=ps;
+  pg.innerHTML=pageHead('Products',`${ps.length} products in catalogue`,
+    `<div class="search-box">${ICONS.search}<input id="pq" placeholder="Search products..." oninput="filterRows('prodRows',this.value)"></div><button class="btn btn-primary" onclick="prodForm()">${ICONS.plus} Add Product</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Product</th><th>Price</th><th>Category</th><th style="text-align:right">Actions</th></tr></thead>
+  <tbody id="prodRows">${ps.map(p=>`<tr data-s="${(p.name+' '+p.id).toLowerCase()}">
+    <td><div style="display:flex;align-items:center"><div class="avatar-sm">${(p.name||'?')[0].toUpperCase()}</div><div><div class="cell-main">${p.name}</div><div class="cell-sub">${p.id}${p.badge?` · <span class="chip">${p.badge}</span>`:''}</div></div></div></td>
+    <td class="price">₹${(+p.price||0).toLocaleString('en-IN')}</td><td>${p.category||'<span class="cell-sub">—</span>'}</td>
+    <td style="text-align:right;white-space:nowrap"><button class="btn btn-blue-soft btn-sm" onclick="prodForm('${p.id}')">Edit</button> <button class="btn btn-danger-soft btn-sm" onclick="delProd('${p.id}')">Delete</button></td></tr>`).join('')||`<tr><td colspan=4>${''}</td></tr>`}</tbody></table>
+    ${ps.length?'':'<div class="empty">'+ICONS.inbox+'<p>No products yet. Add your first product.</p></div>'}</div></div>`;
+}
+function filterRows(tbodyId,q){
+  q=q.toLowerCase();
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=(tr.dataset.s||'').includes(q)?'':'none';});
 }
 function prodForm(id){
   const p=id?(window._prods||[]).find(x=>x.id===id):{};
-  openModal(id?'Edit Product':'Add Product',
-    F('pf_name','Name','text',p.name||'')+`<div class="row2">${F('pf_price','Price ₹','number',p.price||'')}${F('pf_cat','Category','text',p.category||'')}</div>`+FA('pf_desc','Description',p.desc||'')+`<div class="row2">${F('pf_badge','Badge','text',p.badge||'')}${F('pf_img','Image URL','text',p.img||'')}</div>`,
-    async()=>{
-      const body={name:gv('pf_name'),price:+gv('pf_price'),category:gv('pf_cat'),desc:gv('pf_desc'),badge:gv('pf_badge'),img:gv('pf_img')};
-      if(!body.name||!body.price)return alert('Name & price required');
-      await api(id?'/products/'+id:'/products',id?'PUT':'POST',body);closeModal();loadProducts();
-    });
+  openModal(id?'Edit Product':'Add Product', id?'Update product details':'Add a new product to your catalogue',
+    F('pf_name','Product name','text',p.name||'','e.g. 1 Litre Bottle')+`<div class="mrow2">${F('pf_price','Price (₹)','number',p.price||'','20')}${F('pf_cat','Category','text',p.category||'','Bottles')}</div>`+FA('pf_desc','Description',p.desc||'')+`<div class="mrow2">${F('pf_badge','Badge','text',p.badge||'','NEW')}${F('pf_img','Image URL','text',p.img||'')}</div>`,
+    async()=>{const body={name:gv('pf_name'),price:+gv('pf_price'),category:gv('pf_cat'),desc:gv('pf_desc'),badge:gv('pf_badge'),img:gv('pf_img')};
+      if(!body.name||!body.price)return toast('Name and price are required','error');
+      await api(id?'/products/'+id:'/products',id?'PUT':'POST',body);closeModal();toast(id?'Product updated':'Product added','success');rProducts();});
 }
-async function delProd(id){if(confirm('Delete product?')){await api('/products/'+id,'DELETE');loadProducts();}}
+async function delProd(id){if(!confirm('Delete this product?'))return;await api('/products/'+id,'DELETE');toast('Product deleted','success');rProducts();}
 
-// ---- Orders ----
+/* ---------- ORDERS ---------- */
 const OSTAT=['Confirmed','Packed','Shipped','Delivered','Cancelled'];
-async function loadOrders(){
-  const el=document.getElementById('orderContent'); el.innerHTML='<div class="empty">Loading...</div>';
+async function rOrders(){
+  const pg=$('page');
+  pg.innerHTML=pageHead('Orders','Track and fulfil customer orders')+skeletonRows();
   const [oj,bj]=await Promise.all([api('/orders'),api('/delivery-boys').catch(()=>({data:[]}))]);
-  const orders=(oj.data||[]).reverse(), boys=bj.data||[];
-  window._boys=boys;
-  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Rider</th></tr></thead><tbody>
-  ${orders.map(o=>`<tr><td><b>${o.id}</b><br><small style="color:var(--grey)">${(o.placedAt||'').slice(0,10)}</small></td>
-  <td>${o.name||'-'}<br><small style="color:var(--grey)">${o.phone||''}</small></td><td><b>₹${o.total||0}</b></td>
-  <td><select class="stsel" onchange="setOStatus('${o.id}',this.value)">${OSTAT.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select></td>
-  <td><select class="stsel" onchange="assignBoy('${o.id}',this.value)"><option value="">--</option>${boys.map(b=>`<option value="${b.name}" ${o.deliveryBoy===b.name?'selected':''}>${b.name}</option>`).join('')}</select></td></tr>`).join('')||'<tr><td colspan=5 class="empty">No orders yet</td></tr>'}
-  </tbody></table></div>`;
+  const orders=(oj.data||[]).reverse(), boys=(bj.data||[]).filter(b=>b.active!==false);
+  pg.innerHTML=pageHead('Orders',`${orders.length} total orders`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th><th>Rider</th></tr></thead><tbody>
+  ${orders.map(o=>`<tr><td><div class="cell-main">${o.id}</div><div class="cell-sub">${(o.placedAt||'').slice(0,10)} · ${o.payment||'COD'}</div></td>
+    <td><div class="cell-main">${o.name||'-'}</div><div class="cell-sub">${o.phone||''}</div></td>
+    <td class="price">₹${(+o.total||0).toLocaleString('en-IN')}</td>
+    <td><select class="stsel" onchange="setOStatus('${o.id}',this.value)">${OSTAT.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select></td>
+    <td><select class="stsel" onchange="assignBoy('${o.id}',this.value)"><option value="">Unassigned</option>${boys.map(b=>`<option value="${b.name}" ${o.deliveryBoy===b.name?'selected':''}>${b.name}</option>`).join('')}</select></td></tr>`).join('')||''}
+  </tbody></table>${orders.length?'':'<div class="empty">'+ICONS.inbox+'<p>No orders yet</p></div>'}</div></div>`;
 }
-async function setOStatus(id,s){await api('/orders/'+id+'/status','PATCH',{status:s});loadOrders();}
-async function assignBoy(id,name){if(!name)return;await api('/orders/'+id+'/assign','PATCH',{deliveryBoy:name});}
+async function setOStatus(id,s){await api('/orders/'+id+'/status','PATCH',{status:s});toast('Order '+id+' → '+s,'success');rOrders();}
+async function assignBoy(id,name){if(!name)return;await api('/orders/'+id+'/assign','PATCH',{deliveryBoy:name});toast('Rider assigned','success');}
 
-// ---- Subscriptions ----
-async function loadSubs(){
-  const el=document.getElementById('subsContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- SUBSCRIPTIONS ---------- */
+async function rSubs(){
+  const pg=$('page'); pg.innerHTML=pageHead('Subscriptions','Recurring delivery plans')+skeletonRows();
   const j=await api('/subscriptions'); const ss=j.data||[];
-  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Next</th><th></th></tr></thead><tbody>
-  ${ss.map(s=>`<tr><td>${s.name||'-'}<br><small style="color:var(--grey)">${s.phone||''}</small></td><td>${s.plan||'-'}</td>
-  <td><span class="status st-${s.status}">${s.status}</span></td><td>${(s.nextDelivery||'').slice(0,10)}</td>
-  <td style="white-space:nowrap"><button class="btn btn-edit" onclick="subStatus('${s.id}','${s.status==='active'?'paused':'active'}')">${s.status==='active'?'Pause':'Resume'}</button><button class="btn btn-del" onclick="delSub('${s.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan=5 class="empty">No subscriptions</td></tr>'}
-  </tbody></table></div>`;
+  const act=ss.filter(s=>s.status==='active').length;
+  pg.innerHTML=pageHead('Subscriptions',`${act} active of ${ss.length} total`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Next Delivery</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+  ${ss.map(s=>`<tr><td><div class="cell-main">${s.name||'-'}</div><div class="cell-sub">${s.phone||''}</div></td><td>${s.plan||'-'}</td><td>${badge(s.status)}</td><td>${(s.nextDelivery||'').slice(0,10)||'—'}</td>
+  <td style="text-align:right;white-space:nowrap"><button class="btn ${s.status==='active'?'btn-ghost':'btn-blue-soft'} btn-sm" onclick="subStatus('${s.id}','${s.status==='active'?'paused':'active'}')">${s.status==='active'?'Pause':'Resume'}</button> <button class="btn btn-danger-soft btn-sm" onclick="delSub('${s.id}')">Delete</button></td></tr>`).join('')||''}
+  </tbody></table>${ss.length?'':'<div class="empty">'+ICONS.inbox+'<p>No subscriptions yet</p></div>'}</div></div>`;
 }
-async function subStatus(id,st){await api('/subscriptions/'+id,'PUT',{status:st});loadSubs();}
-async function delSub(id){if(confirm('Delete?')){await api('/subscriptions/'+id,'DELETE');loadSubs();}}
+async function subStatus(id,st){await api('/subscriptions/'+id,'PUT',{status:st});toast('Subscription '+st,'success');rSubs();}
+async function delSub(id){if(!confirm('Delete subscription?'))return;await api('/subscriptions/'+id,'DELETE');toast('Deleted','success');rSubs();}
 
-// ---- Slots ----
-async function loadSlots(){
-  const el=document.getElementById('slotsContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- SLOTS ---------- */
+async function rSlots(){
+  const pg=$('page'); pg.innerHTML=pageHead('Delivery Slots','Manage delivery time windows',`<button class="btn btn-primary" onclick="slotForm()">${ICONS.plus} Add Slot</button>`)+skeletonRows();
   const j=await api('/slots'); const ss=j.data||[];
-  el.innerHTML=`<button class="btn btn-add" onclick="slotForm()">+ Add Slot</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Slot</th><th>Active</th><th></th></tr></thead><tbody>
-  ${ss.map(s=>`<tr><td><b>${s.label}</b></td><td>${s.active?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
-  <td style="white-space:nowrap"><button class="btn btn-edit" onclick="toggleSlot('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button><button class="btn btn-del" onclick="delSlot('${s.id}')">Del</button></td></tr>`).join('')}
-  </tbody></table></div>`;
+  pg.innerHTML=pageHead('Delivery Slots',`${ss.filter(s=>s.active).length} active windows`,`<button class="btn btn-primary" onclick="slotForm()">${ICONS.plus} Add Slot</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Time Window</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+  ${ss.map(s=>`<tr><td><div class="cell-main">${s.label}</div></td><td>${s.active?badge('active'):badge('inactive','b-grey')}</td>
+  <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="toggleSlot('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button> <button class="btn btn-danger-soft btn-sm" onclick="delSlot('${s.id}')">Delete</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
 }
-function slotForm(){openModal('Add Slot',F('sf_label','Label (e.g. Morning 7-11 AM)'),async()=>{const l=gv('sf_label');if(!l)return alert('Required');await api('/slots','POST',{label:l});closeModal();loadSlots();});}
-async function toggleSlot(id,a){await api('/slots/'+id,'PUT',{active:a});loadSlots();}
-async function delSlot(id){if(confirm('Delete?')){await api('/slots/'+id,'DELETE');loadSlots();}}
+function slotForm(){openModal('Add Delivery Slot','Create a new delivery time window',F('sf_label','Label','text','','e.g. Morning (7–11 AM)'),async()=>{const l=gv('sf_label');if(!l)return toast('Label required','error');await api('/slots','POST',{label:l});closeModal();toast('Slot added','success');rSlots();});}
+async function toggleSlot(id,a){await api('/slots/'+id,'PUT',{active:a});rSlots();}
+async function delSlot(id){if(!confirm('Delete slot?'))return;await api('/slots/'+id,'DELETE');toast('Deleted','success');rSlots();}
 
-// ---- Delivery Boys ----
-async function loadBoys(){
-  const el=document.getElementById('boysContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- RIDERS ---------- */
+async function rBoys(){
+  const pg=$('page'); pg.innerHTML=pageHead('Delivery Riders','Manage your delivery team',`<button class="btn btn-primary" onclick="boyForm()">${ICONS.plus} Add Rider</button>`)+skeletonRows();
   const j=await api('/delivery-boys'); const bs=j.data||[];
-  el.innerHTML=`<button class="btn btn-add" onclick="boyForm()">+ Add Rider</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Active</th><th></th></tr></thead><tbody>
-  ${bs.map(b=>`<tr><td><b>${b.name}</b></td><td>${b.phone||'-'}</td><td>${b.active?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
-  <td style="white-space:nowrap"><button class="btn btn-edit" onclick="toggleBoy('${b.id}',${!b.active})">${b.active?'Disable':'Enable'}</button><button class="btn btn-del" onclick="delBoy('${b.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan=4 class="empty">No riders</td></tr>'}
-  </tbody></table></div>`;
+  pg.innerHTML=pageHead('Delivery Riders',`${bs.filter(b=>b.active).length} active riders`,`<button class="btn btn-primary" onclick="boyForm()">${ICONS.plus} Add Rider</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Rider</th><th>Phone</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+  ${bs.map(b=>`<tr><td><div style="display:flex;align-items:center"><div class="avatar-sm">${(b.name||'?')[0].toUpperCase()}</div><div class="cell-main">${b.name}</div></div></td><td>${b.phone||'—'}</td><td>${b.active?badge('active'):badge('inactive','b-grey')}</td>
+  <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="toggleBoy('${b.id}',${!b.active})">${b.active?'Disable':'Enable'}</button> <button class="btn btn-danger-soft btn-sm" onclick="delBoy('${b.id}')">Delete</button></td></tr>`).join('')||''}
+  </tbody></table>${bs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No riders yet</p></div>'}</div></div>`;
 }
-function boyForm(){openModal('Add Rider',F('bf_name','Name')+F('bf_phone','Phone','tel'),async()=>{const n=gv('bf_name');if(!n)return alert('Required');await api('/delivery-boys','POST',{name:n,phone:gv('bf_phone')});closeModal();loadBoys();});}
-async function toggleBoy(id,a){await api('/delivery-boys/'+id,'PUT',{active:a});loadBoys();}
-async function delBoy(id){if(confirm('Delete?')){await api('/delivery-boys/'+id,'DELETE');loadBoys();}}
+function boyForm(){openModal('Add Rider','Add a new delivery team member',F('bf_name','Full name','text','','e.g. Rahul Kumar')+F('bf_phone','Phone number','tel','','98XXXXXXXX'),async()=>{const n=gv('bf_name');if(!n)return toast('Name required','error');await api('/delivery-boys','POST',{name:n,phone:gv('bf_phone')});closeModal();toast('Rider added','success');rBoys();});}
+async function toggleBoy(id,a){await api('/delivery-boys/'+id,'PUT',{active:a});rBoys();}
+async function delBoy(id){if(!confirm('Delete rider?'))return;await api('/delivery-boys/'+id,'DELETE');toast('Deleted','success');rBoys();}
 
-// ---- Inventory ----
-async function loadInv(){
-  const el=document.getElementById('invContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- INVENTORY ---------- */
+async function rInv(){
+  const pg=$('page'); pg.innerHTML=pageHead('Inventory','Track stock levels',`<button class="btn btn-primary" onclick="invForm()">${ICONS.plus} Update Stock</button>`)+skeletonRows();
   const [pj,ij]=await Promise.all([api('/products'),api('/inventory')]);
-  const ps=pj.data||[],inv=ij.data||[];
-  const pmap={};ps.forEach(p=>pmap[p.id]=p);
-  el.innerHTML=`<button class="btn btn-add" onclick="invForm()">+ Update Stock</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Product</th><th>Stock</th><th>Status</th></tr></thead><tbody>
-  ${ps.map(p=>{const it=inv.find(x=>x.productId===p.id);const st=it?it.stock:0;const low=it&&st<=(it.lowAt||10);
-    return `<tr><td>${p.name}</td><td><b>${st}</b></td><td>${low?'<span class="chip danger">LOW</span>':'<span class="chip">OK</span>'}</td></tr>`;}).join('')}
-  </tbody></table></div>`;
+  const ps=pj.data||[],inv=ij.data||[]; const low=inv.filter(x=>x.stock<=(x.lowAt||10)).length;
+  pg.innerHTML=pageHead('Inventory',`${low} products low on stock`,`<button class="btn btn-primary" onclick="invForm()">${ICONS.plus} Update Stock</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Product</th><th>Stock</th><th>Alert At</th><th>Status</th></tr></thead><tbody>
+  ${ps.map(p=>{const it=inv.find(x=>x.productId===p.id);const st=it?it.stock:0;const la=it?(it.lowAt||10):10;const isLow=st<=la;
+    return `<tr><td><div class="cell-main">${p.name}</div><div class="cell-sub">₹${p.price}</div></td><td class="${isLow?'low-stock':'price'}">${st} units</td><td>${la}</td><td>${isLow?'<span class="badge b-red"><span class="dot"></span>Low stock</span>':'<span class="badge b-green"><span class="dot"></span>In stock</span>'}</td></tr>`;}).join('')}
+  </tbody></table></div></div>`;
 }
 function invForm(){
   const ps=window._prods||[];
-  openModal('Update Stock',`<label>Product</label><select id="if_pid">${ps.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select>`+`<div class="row2">${F('if_stock','Stock','number','0')}${F('if_low','Low alert at','number','10')}</div>`,
-  async()=>{await api('/inventory','POST',{productId:gv('if_pid'),stock:+gv('if_stock'),lowAt:+gv('if_low')});closeModal();loadInv();});
+  openModal('Update Stock','Set inventory level for a product',
+    `<div class="field"><label>Product</label><select id="if_pid" class="input" style="width:100%">${ps.map(p=>`<option value="${p.id}">${p.name}</option>`).join('')}</select></div><div class="mrow2">${F('if_stock','Stock units','number','0')}${F('if_low','Low alert at','number','10')}</div>`,
+    async()=>{await api('/inventory','POST',{productId:gv('if_pid'),stock:+gv('if_stock'),lowAt:+gv('if_low')});closeModal();toast('Stock updated','success');rInv();});
 }
 
-// ---- Categories ----
-async function loadCats(){
-  const el=document.getElementById('catsContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- CATEGORIES ---------- */
+async function rCats(){
+  const pg=$('page'); pg.innerHTML=pageHead('Categories','Organise your products',`<button class="btn btn-primary" onclick="catForm()">${ICONS.plus} Add Category</button>`)+skeletonRows();
   const j=await api('/categories'); const cs=j.data||[];
-  el.innerHTML=`<button class="btn btn-add" onclick="catForm()">+ Add Category</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Name</th><th></th></tr></thead><tbody>
-  ${cs.map(c=>`<tr><td><b>${c.name}</b></td><td><button class="btn btn-del" onclick="delCat('${c.id}')">Del</button></td></tr>`).join('')}
-  </tbody></table></div>`;
+  pg.innerHTML=pageHead('Categories',`${cs.length} categories`,`<button class="btn btn-primary" onclick="catForm()">${ICONS.plus} Add Category</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Category</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+  ${cs.map(c=>`<tr><td><span class="chip">${c.name}</span></td><td style="text-align:right"><button class="btn btn-danger-soft btn-sm" onclick="delCat('${c.id}')">Delete</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
 }
-function catForm(){openModal('Add Category',F('cf_name','Name'),async()=>{const n=gv('cf_name');if(!n)return alert('Required');await api('/categories','POST',{name:n});closeModal();loadCats();});}
-async function delCat(id){if(confirm('Delete?')){await api('/categories/'+id,'DELETE');loadCats();}}
+function catForm(){openModal('Add Category','Create a product category',F('cf_name','Category name','text','','e.g. Bottles'),async()=>{const n=gv('cf_name');if(!n)return toast('Name required','error');await api('/categories','POST',{name:n});closeModal();toast('Category added','success');rCats();});}
+async function delCat(id){if(!confirm('Delete category?'))return;await api('/categories/'+id,'DELETE');toast('Deleted','success');rCats();}
 
-// ---- Banners ----
-async function loadBanners(){
-  const el=document.getElementById('bannersContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- BANNERS ---------- */
+async function rBanners(){
+  const pg=$('page'); pg.innerHTML=pageHead('Banners','Promotional banners',`<button class="btn btn-primary" onclick="bannerForm()">${ICONS.plus} Add Banner</button>`)+skeletonRows();
   const j=await api('/banners'); const bs=j.data||[];
-  el.innerHTML=`<button class="btn btn-add" onclick="bannerForm()">+ Add Banner</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Title</th><th>Active</th><th></th></tr></thead><tbody>
-  ${bs.map(b=>`<tr><td><b>${b.title||'-'}</b><br><small style="color:var(--grey)">${b.subtitle||''}</small></td><td>${b.active?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
-  <td style="white-space:nowrap"><button class="btn btn-edit" onclick="toggleBanner('${b.id}',${!b.active})">${b.active?'Hide':'Show'}</button><button class="btn btn-del" onclick="delBanner('${b.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan=3 class="empty">No banners</td></tr>'}
-  </tbody></table></div>`;
+  pg.innerHTML=pageHead('Banners',`${bs.filter(b=>b.active).length} visible`,`<button class="btn btn-primary" onclick="bannerForm()">${ICONS.plus} Add Banner</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Banner</th><th>Visibility</th><th style="text-align:right">Actions</th></tr></thead><tbody>
+  ${bs.map(b=>`<tr><td><div class="cell-main">${b.title||'Untitled'}</div><div class="cell-sub">${b.subtitle||''}</div></td><td>${b.active?badge('active'):badge('hidden','b-grey')}</td>
+  <td style="text-align:right;white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="toggleBanner('${b.id}',${!b.active})">${b.active?'Hide':'Show'}</button> <button class="btn btn-danger-soft btn-sm" onclick="delBanner('${b.id}')">Delete</button></td></tr>`).join('')||''}
+  </tbody></table>${bs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No banners yet</p></div>'}</div></div>`;
 }
-function bannerForm(){openModal('Add Banner',F('bf_t','Title')+F('bf_st','Subtitle')+F('bf_img','Image URL'),async()=>{await api('/banners','POST',{title:gv('bf_t'),subtitle:gv('bf_st'),img:gv('bf_img')});closeModal();loadBanners();});}
-async function toggleBanner(id,a){await api('/banners/'+id,'PUT',{active:a});loadBanners();}
-async function delBanner(id){if(confirm('Delete?')){await api('/banners/'+id,'DELETE');loadBanners();}}
+function bannerForm(){openModal('Add Banner','Create a promotional banner',F('bf_t','Title','text','','e.g. Monsoon Sale')+F('bf_st','Subtitle','text','','Up to 20% off')+F('bf_img','Image URL','text',''),async()=>{await api('/banners','POST',{title:gv('bf_t'),subtitle:gv('bf_st'),img:gv('bf_img')});closeModal();toast('Banner added','success');rBanners();});}
+async function toggleBanner(id,a){await api('/banners/'+id,'PUT',{active:a});rBanners();}
+async function delBanner(id){if(!confirm('Delete banner?'))return;await api('/banners/'+id,'DELETE');toast('Deleted','success');rBanners();}
 
-// ---- Customers ----
-async function loadCust(){
-  const el=document.getElementById('custContent'); el.innerHTML='<div class="empty">Loading...</div>';
-  const j=await api('/customers'); const cs=j.data||[];
-  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Customer</th><th>Orders</th><th>Spent</th></tr></thead><tbody>
-  ${cs.map(c=>`<tr><td><b>${c.name||'-'}</b><br><small style="color:var(--grey)">${c.phone}</small></td><td>${c.orders}</td><td><b>₹${c.spent.toLocaleString('en-IN')}</b></td></tr>`).join('')||'<tr><td colspan=3 class="empty">No customers</td></tr>'}
-  </tbody></table></div>`;
+/* ---------- CUSTOMERS ---------- */
+async function rCust(){
+  const pg=$('page'); pg.innerHTML=pageHead('Customers','Your buyer base')+skeletonRows();
+  const j=await api('/customers'); const cs=(j.data||[]).sort((a,b)=>b.spent-a.spent);
+  const totalRev=cs.reduce((s,c)=>s+c.spent,0);
+  pg.innerHTML=pageHead('Customers',`${cs.length} customers · ₹${totalRev.toLocaleString('en-IN')} lifetime value`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Customer</th><th>Orders</th><th>Total Spent</th></tr></thead><tbody>
+  ${cs.map(c=>`<tr><td><div style="display:flex;align-items:center"><div class="avatar-sm">${(c.name||c.phone||'?')[0].toUpperCase()}</div><div><div class="cell-main">${c.name||'Guest'}</div><div class="cell-sub">${c.phone}</div></div></div></td><td>${c.orders}</td><td class="price">₹${c.spent.toLocaleString('en-IN')}</td></tr>`).join('')||''}
+  </tbody></table>${cs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No customers yet</p></div>'}</div></div>`;
 }
 
-// ---- Coupons ----
-async function loadCoupons(){
-  const el=document.getElementById('couponContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- COUPONS ---------- */
+async function rCoupons(){
+  const pg=$('page'); pg.innerHTML=pageHead('Coupons','Discount codes',`<button class="btn btn-primary" onclick="couponForm()">${ICONS.plus} Add Coupon</button>`)+skeletonRows();
   const j=await api('/coupons'); const cs=j.data||[];
-  el.innerHTML=`<button class="btn btn-add" onclick="couponForm()">+ Add Coupon</button>
-  <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Off</th><th>Min ₹</th><th>Active</th><th></th></tr></thead><tbody>
-  ${cs.map(c=>`<tr><td><b>${c.code}</b></td><td>${c.discount}%</td><td>₹${c.minOrder||0}</td><td>${c.active!==false?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
-  <td><button class="btn btn-del" onclick="delCoupon('${c.code}')">Del</button></td></tr>`).join('')||'<tr><td colspan=5 class="empty">No coupons</td></tr>'}
-  </tbody></table></div>`;
+  pg.innerHTML=pageHead('Coupons',`${cs.length} discount codes`,`<button class="btn btn-primary" onclick="couponForm()">${ICONS.plus} Add Coupon</button>`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Status</th></tr></thead><tbody>
+  ${cs.map(c=>`<tr><td><span class="chip" style="font-family:monospace;font-size:12px">${c.code}</span></td><td class="price">${c.discount}% off</td><td>₹${c.minOrder||0}</td><td>${c.active!==false?badge('active'):badge('inactive','b-grey')}</td></tr>`).join('')||''}
+  </tbody></table>${cs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No coupons yet</p></div>'}</div></div>`;
 }
-function couponForm(){openModal('Add Coupon',F('cc_code','Code (e.g. WELCOME10)')+`<div class="row2">${F('cc_disc','Discount %','number')}${F('cc_min','Min order ₹','number','0')}</div>`,async()=>{const code=gv('cc_code').toUpperCase();if(!code)return alert('Required');await api('/coupons','POST',{code,discount:+gv('cc_disc'),minOrder:+gv('cc_min')||0,active:true});closeModal();loadCoupons();});}
-async function delCoupon(code){if(confirm('Delete '+code+'?')){await api('/coupons','POST',{delete:code}).catch(()=>{});const j=await api('/coupons');const cs=(j.data||[]).filter(c=>c.code!==code);await fetch(API+'/coupons/reset',{method:'POST',headers:H()}).catch(()=>{});loadCoupons();}}
+function couponForm(){openModal('Add Coupon','Create a discount code',F('cc_code','Code','text','','e.g. WELCOME10')+`<div class="mrow2">${F('cc_disc','Discount %','number','','10')}${F('cc_min','Min order ₹','number','0')}</div>`,async()=>{const code=gv('cc_code').toUpperCase().replace(/\s/g,'');if(!code||!gv('cc_disc'))return toast('Code & discount required','error');await api('/coupons','POST',{code,discount:+gv('cc_disc'),minOrder:+gv('cc_min')||0,active:true});closeModal();toast('Coupon created','success');rCoupons();});}
 
-// ---- Reviews ----
-async function loadReviews(){
-  const el=document.getElementById('revContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- REVIEWS ---------- */
+async function rReviews(){
+  const pg=$('page'); pg.innerHTML=pageHead('Reviews','Customer ratings')+skeletonRows();
   const j=await api('/reviews'); const rs=j.data||[];
-  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Product</th><th>Rating</th><th>Review</th></tr></thead><tbody>
-  ${rs.map(r=>`<tr><td>${r.productId||'-'}</td><td>${Array(r.rating||0).fill('<svg width="14" height="14" viewBox="0 0 24 24" fill="#C9A227" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>').join('')}</td><td><b>${r.title||''}</b><br><small>${r.text||''}</small></td></tr>`).join('')||'<tr><td colspan=3 class="empty">No reviews</td></tr>'}
-  </tbody></table></div>`;
+  const avg=rs.length?(rs.reduce((s,r)=>s+(r.rating||0),0)/rs.length).toFixed(1):'—';
+  const starF='<svg width="13" height="13" viewBox="0 0 24 24" fill="#C9A227"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  pg.innerHTML=pageHead('Reviews',`${rs.length} reviews · ${avg} average rating`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Product</th><th>Rating</th><th>Review</th></tr></thead><tbody>
+  ${rs.map(r=>`<tr><td class="cell-sub">${r.productId||'—'}</td><td style="white-space:nowrap">${starF.repeat(r.rating||0)}</td><td><div class="cell-main">${r.title||''}</div><div class="cell-sub">${r.text||''}</div></td></tr>`).join('')||''}
+  </tbody></table>${rs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No reviews yet</p></div>'}</div></div>`;
 }
 
-// ---- Feedback ----
-async function loadFeedback(){
-  const el=document.getElementById('fbContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- FEEDBACK ---------- */
+async function rFeedback(){
+  const pg=$('page'); pg.innerHTML=pageHead('Feedback','Customer messages')+skeletonRows();
   const j=await api('/feedback'); const fs=j.data||[];
-  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>From</th><th>Message</th><th>Date</th></tr></thead><tbody>
-  ${fs.map(f=>`<tr><td>${f.name||'-'}</td><td>${f.message||''}</td><td>${(f.at||'').slice(0,10)}</td></tr>`).join('')||'<tr><td colspan=3 class="empty">No feedback</td></tr>'}
-  </tbody></table></div>`;
+  pg.innerHTML=pageHead('Feedback',`${fs.length} messages`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>From</th><th>Message</th><th>Date</th></tr></thead><tbody>
+  ${fs.map(f=>`<tr><td><div class="cell-main">${f.name||'Anonymous'}</div></td><td style="max-width:320px">${f.message||''}</td><td class="cell-sub">${(f.at||'').slice(0,10)}</td></tr>`).join('')||''}
+  </tbody></table>${fs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No feedback yet</p></div>'}</div></div>`;
 }
 
-// ---- Reports ----
-async function loadReports(){
-  const el=document.getElementById('rptContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- REPORTS ---------- */
+async function rReports(){
+  const pg=$('page'); pg.innerHTML=pageHead('Reports','Sales analytics')+skeletonRows(2);
   const j=await api('/reports/summary'); const s=j.data||{};
-  const bs=s.byStatus||{};
-  el.innerHTML=`<div class="report-grid">
-    <div class="rpt"><h4>Today</h4><div class="big">₹${((s.today||{}).revenue||0).toLocaleString('en-IN')}</div><div class="sub">${(s.today||{}).orders||0} orders</div></div>
-    <div class="rpt"><h4>This Month</h4><div class="big">₹${((s.month||{}).revenue||0).toLocaleString('en-IN')}</div><div class="sub">${(s.month||{}).orders||0} orders</div></div>
-    <div class="rpt"><h4>All Time</h4><div class="big">₹${((s.all||{}).revenue||0).toLocaleString('en-IN')}</div><div class="sub">${(s.all||{}).orders||0} orders</div></div>
+  const rev=v=>(v||0).toLocaleString('en-IN');
+  const bs=s.byStatus||{}; const total=Object.values(bs).reduce((a,b)=>a+b,0)||1;
+  const barColor={'Delivered':'var(--green)','Confirmed':'var(--blue)','Shipped':'#7c3aed','Packed':'var(--gold)','Cancelled':'var(--red)'};
+  pg.innerHTML=pageHead('Reports','Sales analytics')+`
+  <div class="stats">
+    <div class="stat"><div class="icon g">${ICONS.trend}</div><div class="num">₹${rev(s.today&&s.today.revenue)}</div><div class="lbl">Today · ${s.today&&s.today.orders||0} orders</div></div>
+    <div class="stat gold"><div class="icon y">${ICONS.clock}</div><div class="num">₹${rev(s.month&&s.month.revenue)}</div><div class="lbl">This Month · ${s.month&&s.month.orders||0} orders</div></div>
+    <div class="stat"><div class="icon g">${ICONS.cart}</div><div class="num">₹${rev(s.all&&s.all.revenue)}</div><div class="lbl">All Time · ${s.all&&s.all.orders||0} orders</div></div>
+    <div class="stat gold"><div class="icon y">${ICONS.users}</div><div class="num">${total}</div><div class="lbl">Orders Tracked</div></div>
   </div>
-  <h2>Orders by Status</h2>
-  <div class="tbl-wrap"><table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>
-  ${Object.entries(bs).map(([k,v])=>`<tr><td><span class="status st-${k}">${k}</span></td><td><b>${v}</b></td></tr>`).join('')||'<tr><td colspan=2 class="empty">No data</td></tr>'}
-  </tbody></table></div>`;
+  <div class="panel"><div class="panel-head"><h3>Order Status Breakdown</h3></div><div style="padding:20px">
+  ${Object.entries(bs).map(([k,v])=>`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="font-weight:600">${k}</span><span style="color:var(--text-3)">${v} (${Math.round(v/total*100)}%)</span></div><div class="progress"><div style="width:${Math.round(v/total*100)}%;background:${barColor[k]||'var(--green)'}"></div></div></div>`).join('')||'<div class="empty"><p>No data yet</p></div>'}
+  </div></div>`;
 }
 
-// ---- Settings ----
-async function loadSettings(){
-  const el=document.getElementById('setContent'); el.innerHTML='<div class="empty">Loading...</div>';
+/* ---------- SETTINGS ---------- */
+async function rSettings(){
+  const pg=$('page'); pg.innerHTML=pageHead('Settings','Store configuration')+skeletonRows(2);
   const j=await api('/settings'); const s=j.data||{};
-  el.innerHTML=`
-  <div class="settings-group"><h3>Store</h3>
-    ${F('set_name','Store Name','text',s.storeName||'')}
-    <div class="row2">${F('set_fee','Delivery Fee ₹','number',s.deliveryFee||0)}${F('set_min','Min Order ₹','number',s.minOrder||0)}</div>
-    ${F('set_free','Free delivery above ₹','number',s.freeAbove||199)}
+  pg.innerHTML=pageHead('Settings','Store configuration')+`
+  <div class="settings-card"><h3>${ICONS.box} Store</h3>
+    ${F('set_name','Store name','text',s.storeName||'')}
+    <div class="mrow2">${F('set_fee','Delivery fee (₹)','number',s.deliveryFee||0)}${F('set_min','Minimum order (₹)','number',s.minOrder||0)}</div>
+    ${F('set_free','Free delivery above (₹)','number',s.freeAbove||199)}
   </div>
-  <div class="settings-group"><h3>Support</h3>
-    ${F('set_phone','Support Phone','text',s.supportPhone||'')}
-    ${F('set_email','Support Email','text',s.supportEmail||'')}
+  <div class="settings-card"><h3>${ICONS.chat} Support</h3>
+    ${F('set_phone','Support phone','text',s.supportPhone||'')}
+    ${F('set_email','Support email','text',s.supportEmail||'')}
   </div>
-  <div class="settings-group"><h3>Payments</h3>
-    <div class="toggle-row"><span>Cash on Delivery</span><label class="switch"><input type="checkbox" id="set_cod" ${s.codEnabled!==false?'checked':''}><span class="slider"></span></label></div>
-    <div class="toggle-row"><span>Online Payment</span><label class="switch"><input type="checkbox" id="set_online" ${s.onlineEnabled!==false?'checked':''}><span class="slider"></span></label></div>
+  <div class="settings-card"><h3>${ICONS.cart} Payments</h3>
+    <div class="toggle-row"><div><div class="t">Cash on Delivery</div><div class="d">Accept cash payments</div></div><label class="switch"><input type="checkbox" id="set_cod" ${s.codEnabled!==false?'checked':''}><span class="slider"></span></label></div>
+    <div class="toggle-row"><div><div class="t">Online Payment</div><div class="d">UPI, cards & netbanking</div></div><label class="switch"><input type="checkbox" id="set_online" ${s.onlineEnabled!==false?'checked':''}><span class="slider"></span></label></div>
   </div>
-  <button class="btn btn-add" style="width:100%" onclick="saveSettings()">Save Settings</button>`;
+  <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px" onclick="saveSettings()">Save Settings</button>`;
 }
 async function saveSettings(){
-  const body={storeName:gv('set_name'),deliveryFee:+gv('set_fee'),minOrder:+gv('set_min'),freeAbove:+gv('set_free'),
-    supportPhone:gv('set_phone'),supportEmail:gv('set_email'),
-    codEnabled:document.getElementById('set_cod').checked,onlineEnabled:document.getElementById('set_online').checked};
-  await api('/settings','PUT',body); alert('Settings saved!');
+  const body={storeName:gv('set_name'),deliveryFee:+gv('set_fee'),minOrder:+gv('set_min'),freeAbove:+gv('set_free'),supportPhone:gv('set_phone'),supportEmail:gv('set_email'),codEnabled:$('set_cod').checked,onlineEnabled:$('set_online').checked};
+  await api('/settings','PUT',body); toast('Settings saved','success');
 }
 
-const LOADERS={dash:loadDash,products:loadProducts,orders:loadOrders,subs:loadSubs,slots:loadSlots,boys:loadBoys,inventory:loadInv,cats:loadCats,banners:loadBanners,customers:loadCust,coupons:loadCoupons,reviews:loadReviews,feedback:loadFeedback,reports:loadReports,settings:loadSettings};
+const RENDER={dash:rDash,products:rProducts,orders:rOrders,subs:rSubs,slots:rSlots,boys:rBoys,inventory:rInv,cats:rCats,banners:rBanners,customers:rCust,coupons:rCoupons,reviews:rReviews,feedback:rFeedback,reports:rReports,settings:rSettings};
 
 if(TOKEN) init();
 </script>
