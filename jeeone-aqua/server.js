@@ -341,8 +341,28 @@ const server = http.createServer(async (req, res) => {
       return ok(res, { received: true });
     }
     if (p === '/api/feedback' && m === 'GET') {
+      // Public: show approved feedbacks as testimonials (hide phone/email)
+      const all = readJson('feedback', []);
+      const pub = all.filter(f => f.approved !== false).map(f => ({
+        id: f.id, name: f.name || 'Anonymous', message: f.message || '',
+        rating: f.rating || 5, at: f.at || ''
+      }));
+      return ok(res, pub.slice(0, 20));
+    }
+    if (p === '/api/feedback/all' && m === 'GET') {
       if (!requireAdmin(req, res)) return;
       return ok(res, readJson('feedback', []));
+    }
+    const fbMatch = p.match(/^\/api\/feedback\/([\w-]+)$/);
+    if (fbMatch && m === 'PUT') {
+      if (!requireAdmin(req, res)) return;
+      const body = await readBody(req);
+      const fb = readJson('feedback', []);
+      const i = fb.findIndex(x => x.id === fbMatch[1]);
+      if (i < 0) return fail(res, 404, 'Not found');
+      fb[i] = { ...fb[i], ...body, id: fbMatch[1] };
+      writeJson('feedback', fb);
+      return ok(res, fb[i]);
     }
 
     // ----- Notifications -----

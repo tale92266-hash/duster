@@ -608,12 +608,21 @@ async function rReviews(){
 
 /* ---------- FEEDBACK ---------- */
 async function rFeedback(){
-  const pg=$('page'); pg.innerHTML=pageHead('Feedback','Customer messages')+skeletonRows();
-  const j=await api('/feedback'); const fs=j.data||[];
-  pg.innerHTML=pageHead('Feedback',`${fs.length} messages`)+`
-  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>From</th><th>Message</th><th>Date</th></tr></thead><tbody>
-  ${fs.map(f=>`<tr><td><div class="cell-main">${f.name||'Anonymous'}</div></td><td style="max-width:320px">${f.message||''}</td><td class="cell-sub">${(f.at||'').slice(0,10)}</td></tr>`).join('')||''}
+  const pg=$('page'); pg.innerHTML=pageHead('Feedback','Customer messages — approve to show on website')+skeletonRows();
+  let fs=[];
+  try{ const j=await api('/feedback/all'); fs=j.data||[]; }catch(e){ const j2=await api('/feedback'); fs=j2.data||[]; }
+  pg.innerHTML=pageHead('Feedback',`${fs.length} messages · ${fs.filter(f=>f.approved!==false).length} visible on site`)+`
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>From</th><th>Message</th><th>Visible</th><th style="text-align:right">Action</th></tr></thead><tbody>
+  ${fs.map(f=>`<tr><td><div class="cell-main">${f.name||'Anonymous'}</div><div class="cell-sub">${(f.at||'').slice(0,10)}</div></td><td style="max-width:300px">${f.message||''}</td>
+  <td>${f.approved!==false?'<span class="badge b-green"><span class="dot"></span>Live</span>':'<span class="badge b-grey"><span class="dot"></span>Hidden</span>'}</td>
+  <td style="text-align:right"><button class="btn ${f.approved!==false?'btn-ghost':'btn-blue-soft'} btn-sm" onclick="toggleFb('${f.id}',${f.approved===false})">${f.approved!==false?'Hide':'Approve'}</button></td></tr>`).join('')||''}
   </tbody></table>${fs.length?'':'<div class="empty">'+ICONS.inbox+'<p>No feedback yet</p></div>'}</div></div>`;
+}
+async function toggleFb(id, approve){
+  // update via direct feedback store - use admin endpoint
+  await api('/feedback/'+id, 'PUT', {approved: approve});
+  toast(approve?'Feedback approved — now visible on website':'Feedback hidden','success');
+  rFeedback();
 }
 
 /* ---------- REPORTS ---------- */
