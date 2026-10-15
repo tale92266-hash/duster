@@ -389,6 +389,30 @@ function filterRows(tbodyId,q){
   q=q.toLowerCase();
   document.querySelectorAll('#'+tbodyId+' tr').forEach(tr=>{tr.style.display=(tr.dataset.s||'').includes(q)?'':'none';});
 }
+const SPEC_PRESETS=[
+ {label:'Weight',unit:'g',ph:'e.g. 500'},{label:'Weight',unit:'kg',ph:'e.g. 20'},
+ {label:'Volume',unit:'ml',ph:'e.g. 500'},{label:'Volume',unit:'L',ph:'e.g. 20'},
+ {label:'Height',unit:'cm',ph:'e.g. 45'},{label:'Width',unit:'cm',ph:'e.g. 30'},
+ {label:'Depth',unit:'cm',ph:'e.g. 30'},{label:'Diameter',unit:'cm',ph:'e.g. 25'},
+ {label:'Capacity',unit:'L',ph:'e.g. 20'},{label:'Material',unit:'',ph:'e.g. Food-grade PET'},
+ {label:'Pack Size',unit:'',ph:'e.g. Pack of 12'},{label:'Color',unit:'',ph:'e.g. Blue'}];
+let specRows=[];
+function renderSpecPresets(){const el=$('specPresets');if(!el)return;
+ el.innerHTML=SPEC_PRESETS.map((s,i)=>{const a=specRows.some(r=>r.label===s.label&&r.unit===s.unit);
+ return `<button type="button" class="chip ${a?'active':''}" style="font-size:12px" onclick="toggleSpecPreset(${i})">${s.label}${s.unit?' ('+s.unit+')':''} ${a?'&#10003;':'+'}</button>`;}).join('');}
+function toggleSpecPreset(i){const s=SPEC_PRESETS[i];const ix=specRows.findIndex(r=>r.label===s.label&&r.unit===s.unit);
+ if(ix>=0)specRows.splice(ix,1);else specRows.push({label:s.label,unit:s.unit,value:'',ph:s.ph});renderSpecRows();renderSpecPresets();}
+function addSpecRow(){specRows.push({label:'',unit:'',value:'',custom:true});renderSpecRows();}
+function removeSpecRow(i){specRows.splice(i,1);renderSpecRows();renderSpecPresets();}
+function renderSpecRows(){const el=$('specRows');if(!el)return;
+ el.innerHTML=specRows.map((r,i)=>`<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">`
+ +(r.custom?`<input placeholder="Label e.g. Neck Size" value="${(r.label||'').replace(/"/g,'&quot;')}" oninput="specRows[${i}].label=this.value" style="flex:1;margin:0">`
+ :`<span style="flex:1;font-size:13px;font-weight:600;padding:10px;background:#f5f7f5;border-radius:8px">${r.label}${r.unit?' ('+r.unit+')':''}</span>`)
+ +`<input placeholder="${r.ph||'Value'}" value="${(r.value||'').replace(/"/g,'&quot;')}" oninput="specRows[${i}].value=this.value" style="flex:1.2;margin:0">`
+ +`<button type="button" class="icon-btn" onclick="removeSpecRow(${i})" style="color:#C62828">${ICONS.trash}</button></div>`).join('');}
+function initSpecs(p){specRows=(p.specs||[]).map(s=>({label:s.label||'',unit:s.unit||'',value:s.value||'',
+ custom:!SPEC_PRESETS.some(pr=>pr.label===s.label&&pr.unit===(s.unit||''))}));renderSpecRows();renderSpecPresets();}
+function getSpecs(){return specRows.filter(r=>r.label&&r.value).map(r=>({label:r.label,unit:r.unit||'',value:r.value}));}
 function prodForm(id){
   const p=id?(window._prods||[]).find(x=>x.id===id):{};
   const imgs=(p.images||[]).join('\n');
@@ -406,6 +430,11 @@ function prodForm(id){
     +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Details</div>`
     +`<div class="mrow2">${F('pf_badge','Badge','text',p.badge||'','NEW / BESTSELLER')}${F('pf_tags','Tags (comma separated)','text',(p.tags||[]).join(', '),'bestseller, family')}</div>`
     +`<div class="mrow2">${F('pf_weight','Weight','text',p.weight||'','1 kg')}${F('pf_unit','Unit','text',p.unit||'pc','pc / litre')}</div>`
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Specifications</div>`
+    +`<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Tick jo specs chahiye (weight, volume, height...), value bharo</div>`
+    +`<div id="specPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>`
+    +`<div id="specRows"></div>`
+    +`<button class="btn btn-ghost btn-sm" type="button" onclick="addSpecRow()" style="margin-top:6px">+ Add Custom Spec</button>`
     +F('pf_warranty','Warranty / Guarantee','text',p.warranty||'','')
     +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Policies</div>`
     +FA('pf_ship','Shipping info',p.shippingInfo||'')
@@ -435,13 +464,15 @@ function prodForm(id){
         weight:gv('pf_weight'),unit:gv('pf_unit')||'pc',warranty:gv('pf_warranty'),
         shippingInfo:gv('pf_ship'),returnPolicy:gv('pf_ret'),refundPolicy:gv('pf_ref'),
         featured:$('pf_feat').checked,active:$('pf_act').checked,
-        badges:{return:$('pf_bReturn').checked,cod:$('pf_bCod').checked,delivery:$('pf_bDel').checked,genuine:$('pf_bGen').checked}};
+        badges:{return:$('pf_bReturn').checked,cod:$('pf_bCod').checked,delivery:$('pf_bDel').checked,genuine:$('pf_bGen').checked},
+        specs:getSpecs()};
       const st=gv('pf_stock'), low=gv('pf_low');
       if(st!=='' ) body.stock=st;
       if(low!=='') body.lowAt=low;
       if(!body.name||!body.price)return toast('Name and selling price are required','error');
       await api(id?'/products/'+id:'/products',id?'PUT':'POST',body);
       closeModal();toast(id?'Product updated':'Product added','success');rProducts();});
+  setTimeout(()=>initSpecs(p),50);
 }
 // preload stock into product objects for edit
 async function rProducts(){
