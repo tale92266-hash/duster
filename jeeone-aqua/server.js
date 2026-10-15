@@ -143,6 +143,7 @@ const server = http.createServer(async (req, res) => {
         featured: !!body.featured, active: body.active !== false,
         badges: body.badges || { return: true, cod: true, delivery: true, genuine: true },
         specs: Array.isArray(body.specs) ? body.specs.filter(x => x && x.label && x.value) : [],
+        richContent: Array.isArray(body.richContent) ? body.richContent.filter(x => x && x.type) : [],
         createdAt: new Date().toISOString(),
         ...body,
         id: body.id || uid('p'),

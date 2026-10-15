@@ -413,6 +413,40 @@ function renderSpecRows(){const el=$('specRows');if(!el)return;
 function initSpecs(p){specRows=(p.specs||[]).map(s=>({label:s.label||'',unit:s.unit||'',value:s.value||'',
  custom:!SPEC_PRESETS.some(pr=>pr.label===s.label&&pr.unit===(s.unit||''))}));renderSpecRows();renderSpecPresets();}
 function getSpecs(){return specRows.filter(r=>r.label&&r.value).map(r=>({label:r.label,unit:r.unit||'',value:r.value}));}
+let richRows=[];
+function addRichBlock(type){
+ const b={type};
+ if(type==='banner')b.image='';
+ if(type==='text_image'){b.image='';b.title='';b.text='';}
+ if(type==='features'){b.title='';b.items='';}
+ if(type==='highlight'){b.title='';b.text='';b.color='#1E5A3C';}
+ richRows.push(b);renderRichRows();
+}
+function removeRichRow(i){richRows.splice(i,1);renderRichRows();}
+function moveRichRow(i,d){const j=i+d;if(j<0||j>=richRows.length)return;const t=richRows[i];richRows[i]=richRows[j];richRows[j]=t;renderRichRows();}
+function renderRichRows(){const el=$('richRows');if(!el)return;
+ const labels={banner:'Image Banner',text_image:'Text + Image',features:'Features Grid',highlight:'Highlight Box'};
+ el.innerHTML=richRows.map((b,i)=>{
+  let fields='';
+  if(b.type==='banner')fields=`<input placeholder="Image URL" value="${(b.image||'').replace(/"/g,'&quot;')}" oninput="richRows[${i}].image=this.value" style="margin:0">`;
+  if(b.type==='text_image')fields=`<input placeholder="Title" value="${(b.title||'').replace(/"/g,'&quot;')}" oninput="richRows[${i}].title=this.value" style="margin:0 0 6px">`
+   +`<input placeholder="Image URL" value="${(b.image||'').replace(/"/g,'&quot;')}" oninput="richRows[${i}].image=this.value" style="margin:0 0 6px">`
+   +`<textarea placeholder="Description text" rows="2" oninput="richRows[${i}].text=this.value" style="margin:0">${b.text||''}</textarea>`;
+  if(b.type==='features')fields=`<input placeholder="Section title e.g. Why choose us" value="${(b.title||'').replace(/"/g,'&quot;')}" oninput="richRows[${i}].title=this.value" style="margin:0 0 6px">`
+   +`<textarea placeholder="Features (one per line) e.g.&#10;100% Pure Mineral Water&#10;BIS Certified" rows="3" oninput="richRows[${i}].items=this.value" style="margin:0">${b.items||''}</textarea>`;
+  if(b.type==='highlight')fields=`<input placeholder="Title" value="${(b.title||'').replace(/"/g,'&quot;')}" oninput="richRows[${i}].title=this.value" style="margin:0 0 6px">`
+   +`<textarea placeholder="Highlight text" rows="2" oninput="richRows[${i}].text=this.value" style="margin:0 0 6px">${b.text||''}</textarea>`
+   +`<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px">Color:</span><input type="color" value="${b.color||'#1E5A3C'}" oninput="richRows[${i}].color=this.value" style="width:40px;height:32px;padding:2px;margin:0"></div>`;
+  return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:#fafbfc">
+   <div style="display:flex;align-items:center;margin-bottom:8px">
+    <span style="font-size:12px;font-weight:700;color:var(--green)">${labels[b.type]||b.type}</span>
+    <span style="margin-left:auto;display:flex;gap:4px">
+     <button type="button" class="icon-btn" onclick="moveRichRow(${i},-1)" style="width:28px;height:28px">&#8593;</button>
+     <button type="button" class="icon-btn" onclick="moveRichRow(${i},1)" style="width:28px;height:28px">&#8595;</button>
+     <button type="button" class="icon-btn" onclick="removeRichRow(${i})" style="width:28px;height:28px;color:#C62828">${ICONS.trash}</button>
+    </span></div>${fields}</div>`;}).join('');}
+function initRich(p){richRows=(p.richContent||[]).map(b=>({...b}));renderRichRows();}
+function getRich(){return richRows.filter(b=>b.type);}
 function prodForm(id){
   const p=id?(window._prods||[]).find(x=>x.id===id):{};
   const imgs=(p.images||[]).join('\n');
@@ -435,6 +469,15 @@ function prodForm(id){
     +`<div id="specPresets" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>`
     +`<div id="specRows"></div>`
     +`<button class="btn btn-ghost btn-sm" type="button" onclick="addSpecRow()" style="margin-top:6px">+ Add Custom Spec</button>`
+    +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Rich Content (A+ Style)</div>`
+    +`<div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Flipkart/Amazon jaisa attractive content — banners, features, highlights</div>`
+    +`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addRichBlock('banner')">+ Image Banner</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addRichBlock('text_image')">+ Text + Image</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addRichBlock('features')">+ Features Grid</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="addRichBlock('highlight')">+ Highlight Box</button>
+    </div>`
+    +`<div id="richRows"></div>`
     +F('pf_warranty','Warranty / Guarantee','text',p.warranty||'','')
     +`<div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 2px">Policies</div>`
     +FA('pf_ship','Shipping info',p.shippingInfo||'')
@@ -465,14 +508,15 @@ function prodForm(id){
         shippingInfo:gv('pf_ship'),returnPolicy:gv('pf_ret'),refundPolicy:gv('pf_ref'),
         featured:$('pf_feat').checked,active:$('pf_act').checked,
         badges:{return:$('pf_bReturn').checked,cod:$('pf_bCod').checked,delivery:$('pf_bDel').checked,genuine:$('pf_bGen').checked},
-        specs:getSpecs()};
+        specs:getSpecs(),
+        richContent:getRich()};
       const st=gv('pf_stock'), low=gv('pf_low');
       if(st!=='' ) body.stock=st;
       if(low!=='') body.lowAt=low;
       if(!body.name||!body.price)return toast('Name and selling price are required','error');
       await api(id?'/products/'+id:'/products',id?'PUT':'POST',body);
       closeModal();toast(id?'Product updated':'Product added','success');rProducts();});
-  setTimeout(()=>initSpecs(p),50);
+  setTimeout(()=>{initSpecs(p);initRich(p);},50);
 }
 // preload stock into product objects for edit
 async function rProducts(){
