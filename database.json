@@ -30,5 +30,13 @@
     "directory": "./smartdialer",
     "port": 4004,
     "status": "Online"
+  },
+  {
+    "id": "jeeone",
+    "name": "JeeOne Aqua Backend",
+    "url": "/jeeone",
+    "directory": "./jeeone-aqua",
+    "port": 5001,
+    "status": "Online"
   }
 ]
