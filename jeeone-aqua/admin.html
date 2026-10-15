@@ -11,7 +11,7 @@ body{background:var(--ivory);color:#1f2937;min-height:100vh;padding-bottom:env(s
 /* ---------- LOGIN ---------- */
 #login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--dark),var(--green));padding:20px}
 .login-card{background:var(--white);padding:36px 30px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:360px;max-width:94vw}
-.login-card h1{color:var(--green);text-align:center;font-size:26px;margin-bottom:4px}
+.login-card h1{color:var(--green);text-align:center;font-size:26px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px}
 .login-card p{text-align:center;color:var(--grey);margin-bottom:24px;font-size:14px}
 .login-card input{width:100%;padding:13px 15px;margin-bottom:14px;border:2px solid var(--line);border-radius:10px;font-size:15px;outline:none;transition:border .2s}
 .login-card input:focus{border-color:var(--green)}
@@ -26,7 +26,7 @@ body{background:var(--ivory);color:#1f2937;min-height:100vh;padding-bottom:env(s
 /* ---------- APP SHELL ---------- */
 #app{display:none;min-height:100vh}
 .topbar{background:var(--dark);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.15)}
-.topbar .brand{font-size:19px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:8px}
+.topbar .brand{font-size:19px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:8px}.topbar .brand svg{flex-shrink:0}
 .topbar .brand small{color:#fff;font-weight:400;font-size:12px;opacity:.8}
 .topbar .logout{background:transparent;border:1.5px solid var(--gold);color:var(--gold);padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600}
 .topbar .logout:active{background:var(--gold);color:var(--dark)}
@@ -63,7 +63,7 @@ tr:active{background:#f9fafb}
 /* ---------- BOTTOM NAV (mobile) ---------- */
 .bottomnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--line);z-index:100;padding-bottom:env(safe-area-inset-bottom);overflow-x:auto;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
 .bottomnav button{flex:1;min-width:64px;border:none;background:none;padding:9px 4px 7px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--grey);font-size:10px;font-weight:600}
-.bottomnav button .ic{font-size:20px}
+.bottomnav button .ic{display:flex;align-items:center;justify-content:center}.bottomnav button .ic svg{width:22px;height:22px}.sidenav button svg{width:19px;height:19px;flex-shrink:0}
 .bottomnav button.active{color:var(--green)}
 .bottomnav button:active{background:#f3f4f6}
 /* Desktop sidebar */
@@ -123,12 +123,12 @@ select.stsel{padding:6px 8px;border-radius:8px;border:1.5px solid var(--line);fo
 
 <div id="login">
   <div class="login-card">
-    <h1>💧 JeeOne Aqua</h1>
+    <h1><svg width="26" height="26" viewBox="0 0 24 24" fill="#4FC3F7" style="vertical-align:-5px"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg> JeeOne Aqua</h1>
     <p>Admin Panel</p>
     <input type="text" id="u" placeholder="Username" autocomplete="off">
     <div class="pass-wrap">
       <input type="password" id="p" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
-      <button type="button" class="pass-toggle" onclick="togglePass()" id="passToggle">👁️</button>
+      <button type="button" class="pass-toggle" onclick="togglePass()" id="passToggle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>
     <button class="login-btn" onclick="doLogin()">Login</button>
     <div id="loginErr">Invalid username or password</div>
@@ -137,27 +137,27 @@ select.stsel{padding:6px 8px;border-radius:8px;border:1.5px solid var(--line);fo
 
 <div id="app">
   <div class="topbar">
-    <div class="brand">💧 JeeOne Aqua <small>Admin</small></div>
+    <div class="brand"><svg width="26" height="26" viewBox="0 0 24 24" fill="#4FC3F7" style="vertical-align:-5px"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg> JeeOne Aqua <small>Admin</small></div>
     <button class="logout" onclick="logout()">Logout</button>
   </div>
   <div class="shell">
     <div class="sidenav" id="sidenav"></div>
     <div class="page">
-      <div id="tab-dash" class="tab active"><h2>📊 Dashboard</h2><div id="dashContent"></div></div>
-      <div id="tab-products" class="tab"><h2>📦 Products</h2><div id="prodContent"></div></div>
-      <div id="tab-orders" class="tab"><h2>🛒 Orders</h2><div id="orderContent"></div></div>
-      <div id="tab-subs" class="tab"><h2>🔄 Subscriptions</h2><div id="subsContent"></div></div>
-      <div id="tab-slots" class="tab"><h2>🕐 Delivery Slots</h2><div id="slotsContent"></div></div>
-      <div id="tab-boys" class="tab"><h2>🛵 Delivery Boys</h2><div id="boysContent"></div></div>
-      <div id="tab-inventory" class="tab"><h2>📋 Inventory</h2><div id="invContent"></div></div>
-      <div id="tab-cats" class="tab"><h2>🏷️ Categories</h2><div id="catsContent"></div></div>
-      <div id="tab-banners" class="tab"><h2>🖼️ Banners</h2><div id="bannersContent"></div></div>
-      <div id="tab-customers" class="tab"><h2>👥 Customers</h2><div id="custContent"></div></div>
-      <div id="tab-coupons" class="tab"><h2>🎟️ Coupons</h2><div id="couponContent"></div></div>
-      <div id="tab-reviews" class="tab"><h2>⭐ Reviews</h2><div id="revContent"></div></div>
-      <div id="tab-feedback" class="tab"><h2>💬 Feedback</h2><div id="fbContent"></div></div>
-      <div id="tab-reports" class="tab"><h2>📈 Reports</h2><div id="rptContent"></div></div>
-      <div id="tab-settings" class="tab"><h2>⚙️ Settings</h2><div id="setContent"></div></div>
+      <div id="tab-dash" class="tab active"><h2>Dashboard</h2><div id="dashContent"></div></div>
+      <div id="tab-products" class="tab"><h2>Products</h2><div id="prodContent"></div></div>
+      <div id="tab-orders" class="tab"><h2>Orders</h2><div id="orderContent"></div></div>
+      <div id="tab-subs" class="tab"><h2>Subscriptions</h2><div id="subsContent"></div></div>
+      <div id="tab-slots" class="tab"><h2>Delivery Slots</h2><div id="slotsContent"></div></div>
+      <div id="tab-boys" class="tab"><h2>Delivery Riders</h2><div id="boysContent"></div></div>
+      <div id="tab-inventory" class="tab"><h2>Inventory</h2><div id="invContent"></div></div>
+      <div id="tab-cats" class="tab"><h2>Categories</h2><div id="catsContent"></div></div>
+      <div id="tab-banners" class="tab"><h2>Banners</h2><div id="bannersContent"></div></div>
+      <div id="tab-customers" class="tab"><h2>Customers</h2><div id="custContent"></div></div>
+      <div id="tab-coupons" class="tab"><h2>Coupons</h2><div id="couponContent"></div></div>
+      <div id="tab-reviews" class="tab"><h2>Reviews</h2><div id="revContent"></div></div>
+      <div id="tab-feedback" class="tab"><h2>Feedback</h2><div id="fbContent"></div></div>
+      <div id="tab-reports" class="tab"><h2>Reports</h2><div id="rptContent"></div></div>
+      <div id="tab-settings" class="tab"><h2>Settings</h2><div id="setContent"></div></div>
     </div>
   </div>
   <div class="bottomnav" id="bottomnav"></div>
@@ -175,7 +175,7 @@ async function api(path, method='GET', body){
   if(j.error==='Auth required'){logout();throw new Error('auth');}
   return j;
 }
-function togglePass(){const p=document.getElementById('p'),t=document.getElementById('passToggle');if(p.type==='password'){p.type='text';t.textContent='🙈';}else{p.type='password';t.textContent='👁️';}}
+function togglePass(){const p=document.getElementById('p'),t=document.getElementById('passToggle');if(p.type==='password'){p.type='text';t.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';}else{p.type='password';t.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}}
 async function doLogin(){
   const u=document.getElementById('u').value,p=document.getElementById('p').value;
   document.getElementById('loginErr').style.display='none';
@@ -199,11 +199,11 @@ const gv=id=>document.getElementById(id).value;
 
 // Navigation
 const NAV=[
-  ['dash','📊','Dashboard'],['products','📦','Products'],['orders','🛒','Orders'],
-  ['subs','🔄','Subs'],['slots','🕐','Slots'],['boys','🛵','Riders'],
-  ['inventory','📋','Stock'],['cats','🏷️','Cats'],['banners','🖼️','Banners'],
-  ['customers','👥','Customers'],['coupons','🎟️','Coupons'],['reviews','⭐','Reviews'],
-  ['feedback','💬','Feedback'],['reports','📈','Reports'],['settings','⚙️','Settings']
+  ['dash','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>','Dashboard'],['products','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22" x2="12" y2="12"/></svg>','Products'],['orders','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>','Orders'],
+  ['subs','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>','Subs'],['slots','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>','Slots'],['boys','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/></svg>','Riders'],
+  ['inventory','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>','Stock'],['cats','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>','Cats'],['banners','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>','Banners'],
+  ['customers','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>','Customers'],['coupons','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>','Coupons'],['reviews','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>','Reviews'],
+  ['feedback','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>','Feedback'],['reports','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>','Reports'],['settings','<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>','Settings']
 ];
 function buildNav(){
   const bn=document.getElementById('bottomnav'), sn=document.getElementById('sidenav');
@@ -306,7 +306,7 @@ async function loadSlots(){
   const j=await api('/slots'); const ss=j.data||[];
   el.innerHTML=`<button class="btn btn-add" onclick="slotForm()">+ Add Slot</button>
   <div class="tbl-wrap"><table><thead><tr><th>Slot</th><th>Active</th><th></th></tr></thead><tbody>
-  ${ss.map(s=>`<tr><td><b>${s.label}</b></td><td>${s.active?'✅':'❌'}</td>
+  ${ss.map(s=>`<tr><td><b>${s.label}</b></td><td>${s.active?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
   <td style="white-space:nowrap"><button class="btn btn-edit" onclick="toggleSlot('${s.id}',${!s.active})">${s.active?'Disable':'Enable'}</button><button class="btn btn-del" onclick="delSlot('${s.id}')">Del</button></td></tr>`).join('')}
   </tbody></table></div>`;
 }
@@ -320,7 +320,7 @@ async function loadBoys(){
   const j=await api('/delivery-boys'); const bs=j.data||[];
   el.innerHTML=`<button class="btn btn-add" onclick="boyForm()">+ Add Rider</button>
   <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Phone</th><th>Active</th><th></th></tr></thead><tbody>
-  ${bs.map(b=>`<tr><td><b>${b.name}</b></td><td>${b.phone||'-'}</td><td>${b.active?'✅':'❌'}</td>
+  ${bs.map(b=>`<tr><td><b>${b.name}</b></td><td>${b.phone||'-'}</td><td>${b.active?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
   <td style="white-space:nowrap"><button class="btn btn-edit" onclick="toggleBoy('${b.id}',${!b.active})">${b.active?'Disable':'Enable'}</button><button class="btn btn-del" onclick="delBoy('${b.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan=4 class="empty">No riders</td></tr>'}
   </tbody></table></div>`;
 }
@@ -364,7 +364,7 @@ async function loadBanners(){
   const j=await api('/banners'); const bs=j.data||[];
   el.innerHTML=`<button class="btn btn-add" onclick="bannerForm()">+ Add Banner</button>
   <div class="tbl-wrap"><table><thead><tr><th>Title</th><th>Active</th><th></th></tr></thead><tbody>
-  ${bs.map(b=>`<tr><td><b>${b.title||'-'}</b><br><small style="color:var(--grey)">${b.subtitle||''}</small></td><td>${b.active?'✅':'❌'}</td>
+  ${bs.map(b=>`<tr><td><b>${b.title||'-'}</b><br><small style="color:var(--grey)">${b.subtitle||''}</small></td><td>${b.active?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
   <td style="white-space:nowrap"><button class="btn btn-edit" onclick="toggleBanner('${b.id}',${!b.active})">${b.active?'Hide':'Show'}</button><button class="btn btn-del" onclick="delBanner('${b.id}')">Del</button></td></tr>`).join('')||'<tr><td colspan=3 class="empty">No banners</td></tr>'}
   </tbody></table></div>`;
 }
@@ -387,7 +387,7 @@ async function loadCoupons(){
   const j=await api('/coupons'); const cs=j.data||[];
   el.innerHTML=`<button class="btn btn-add" onclick="couponForm()">+ Add Coupon</button>
   <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Off</th><th>Min ₹</th><th>Active</th><th></th></tr></thead><tbody>
-  ${cs.map(c=>`<tr><td><b>${c.code}</b></td><td>${c.discount}%</td><td>₹${c.minOrder||0}</td><td>${c.active!==false?'✅':'❌'}</td>
+  ${cs.map(c=>`<tr><td><b>${c.code}</b></td><td>${c.discount}%</td><td>₹${c.minOrder||0}</td><td>${c.active!==false?'<span style="color:#16a34a;font-weight:700">Yes</span>':'<span style="color:#dc2626;font-weight:700">No</span>'}</td>
   <td><button class="btn btn-del" onclick="delCoupon('${c.code}')">Del</button></td></tr>`).join('')||'<tr><td colspan=5 class="empty">No coupons</td></tr>'}
   </tbody></table></div>`;
 }
@@ -399,7 +399,7 @@ async function loadReviews(){
   const el=document.getElementById('revContent'); el.innerHTML='<div class="empty">Loading...</div>';
   const j=await api('/reviews'); const rs=j.data||[];
   el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Product</th><th>Rating</th><th>Review</th></tr></thead><tbody>
-  ${rs.map(r=>`<tr><td>${r.productId||'-'}</td><td>${'⭐'.repeat(r.rating||0)}</td><td><b>${r.title||''}</b><br><small>${r.text||''}</small></td></tr>`).join('')||'<tr><td colspan=3 class="empty">No reviews</td></tr>'}
+  ${rs.map(r=>`<tr><td>${r.productId||'-'}</td><td>${Array(r.rating||0).fill('<svg width="14" height="14" viewBox="0 0 24 24" fill="#C9A227" style="vertical-align:-2px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>').join('')}</td><td><b>${r.title||''}</b><br><small>${r.text||''}</small></td></tr>`).join('')||'<tr><td colspan=3 class="empty">No reviews</td></tr>'}
   </tbody></table></div>`;
 }
 
@@ -433,20 +433,20 @@ async function loadSettings(){
   const el=document.getElementById('setContent'); el.innerHTML='<div class="empty">Loading...</div>';
   const j=await api('/settings'); const s=j.data||{};
   el.innerHTML=`
-  <div class="settings-group"><h3>🏪 Store</h3>
+  <div class="settings-group"><h3>Store</h3>
     ${F('set_name','Store Name','text',s.storeName||'')}
     <div class="row2">${F('set_fee','Delivery Fee ₹','number',s.deliveryFee||0)}${F('set_min','Min Order ₹','number',s.minOrder||0)}</div>
     ${F('set_free','Free delivery above ₹','number',s.freeAbove||199)}
   </div>
-  <div class="settings-group"><h3>📞 Support</h3>
+  <div class="settings-group"><h3>Support</h3>
     ${F('set_phone','Support Phone','text',s.supportPhone||'')}
     ${F('set_email','Support Email','text',s.supportEmail||'')}
   </div>
-  <div class="settings-group"><h3>💳 Payments</h3>
+  <div class="settings-group"><h3>Payments</h3>
     <div class="toggle-row"><span>Cash on Delivery</span><label class="switch"><input type="checkbox" id="set_cod" ${s.codEnabled!==false?'checked':''}><span class="slider"></span></label></div>
     <div class="toggle-row"><span>Online Payment</span><label class="switch"><input type="checkbox" id="set_online" ${s.onlineEnabled!==false?'checked':''}><span class="slider"></span></label></div>
   </div>
-  <button class="btn btn-add" style="width:100%" onclick="saveSettings()">💾 Save Settings</button>`;
+  <button class="btn btn-add" style="width:100%" onclick="saveSettings()">Save Settings</button>`;
 }
 async function saveSettings(){
   const body={storeName:gv('set_name'),deliveryFee:+gv('set_fee'),minOrder:+gv('set_min'),freeAbove:+gv('set_free'),
